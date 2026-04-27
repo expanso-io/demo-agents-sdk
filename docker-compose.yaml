@@ -1,26 +1,18 @@
 # =============================================================================
 # demo-agents-sdk — one-shot pipeline runners.
 #
-# HTTP-direct pipelines use the stock expanso-edge image. SDK-mode pipelines
-# use a thin layer (`./Dockerfile`) that adds `uv` so each provider's
-# classifier script can run via `uv run -s` with PEP 723 inline deps.
+# Every service uses the local runner image (expanso-edge + expanso-cli + uv).
+# The image's `run-demo` entrypoint starts the agent in --local mode, deploys
+# the pipeline via expanso-cli, then tails the agent so pipeline output lands
+# on the container's stdout.
 #
 # Examples:
 #   docker compose run --rm openai-http
 #   docker compose run --rm openai-sdk
-#   docker compose run --rm anthropic-http
-#   docker compose run --rm anthropic-sdk
-#   docker compose run --rm gemini-http
-#   docker compose run --rm gemini-sdk
+#   docker compose down -v
 # =============================================================================
 
-x-edge-stock: &edge-stock
-  image: ghcr.io/expanso-io/expanso-edge:nightly
-  volumes:
-    - ./pipelines:/pipelines:ro
-    - ./data:/data:ro
-
-x-edge-runner: &edge-runner
+x-runner: &runner
   build: .
   image: demo-agents-sdk-runner
   volumes:
@@ -31,43 +23,43 @@ x-edge-runner: &edge-runner
 
 services:
   openai-http:
-    <<: *edge-stock
-    command: ["run", "/pipelines/openai-http.yaml"]
+    <<: *runner
+    command: ["/pipelines/openai-http.yaml"]
     environment:
       - OPENAI_API_KEY
       - OPENAI_MODEL
 
   openai-sdk:
-    <<: *edge-runner
-    command: ["run", "/pipelines/openai-sdk.yaml"]
+    <<: *runner
+    command: ["/pipelines/openai-sdk.yaml"]
     environment:
       - OPENAI_API_KEY
       - OPENAI_MODEL
 
   anthropic-http:
-    <<: *edge-stock
-    command: ["run", "/pipelines/anthropic-http.yaml"]
+    <<: *runner
+    command: ["/pipelines/anthropic-http.yaml"]
     environment:
       - ANTHROPIC_API_KEY
       - ANTHROPIC_MODEL
 
   anthropic-sdk:
-    <<: *edge-runner
-    command: ["run", "/pipelines/anthropic-sdk.yaml"]
+    <<: *runner
+    command: ["/pipelines/anthropic-sdk.yaml"]
     environment:
       - ANTHROPIC_API_KEY
       - ANTHROPIC_MODEL
 
   gemini-http:
-    <<: *edge-stock
-    command: ["run", "/pipelines/gemini-http.yaml"]
+    <<: *runner
+    command: ["/pipelines/gemini-http.yaml"]
     environment:
       - GEMINI_API_KEY
       - GEMINI_MODEL
 
   gemini-sdk:
-    <<: *edge-runner
-    command: ["run", "/pipelines/gemini-sdk.yaml"]
+    <<: *runner
+    command: ["/pipelines/gemini-sdk.yaml"]
     environment:
       - GEMINI_API_KEY
       - GEMINI_MODEL

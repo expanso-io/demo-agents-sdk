@@ -1,0 +1,62 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  fast:
+    name: lint + unit + structure tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Lint (ruff check)
+        run: uv run --group dev ruff check scripts/ tests/
+
+      - name: Format check (ruff format --check)
+        run: uv run --group dev ruff format --check scripts/ tests/
+
+      - name: Unit + structure tests
+        run: uv run --group dev pytest -m "not smoke"
+
+      - name: Docker Compose config validates
+        env:
+          OPENAI_API_KEY: test
+          ANTHROPIC_API_KEY: test
+          GEMINI_API_KEY: test
+          OPENAI_MODEL: stub
+          ANTHROPIC_MODEL: stub
+          GEMINI_MODEL: stub
+        run: docker compose config --quiet
+
+  smoke:
+    name: docker build + e2e smoke
+    runs-on: ubuntu-latest
+    needs: fast
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Build runner image
+        run: docker build -t demo-agents-sdk-runner:smoke .
+
+      - name: E2E smoke test
+        run: uv run --group dev pytest -m smoke -v

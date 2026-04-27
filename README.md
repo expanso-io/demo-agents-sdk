@@ -21,40 +21,60 @@ Every pipeline reads the same `data/events.jsonl`, hits its provider, and writes
 
 ```
 demo-agents-sdk/
-├── Dockerfile                       # expanso-edge + uv (for SDK-mode pipelines)
+├── Dockerfile                       # expanso-edge + expanso-cli + uv runner image
+├── run-demo.sh                      # entrypoint: agent + cli deploy + tail logs
 ├── data/events.jsonl                # 8 sample tickets
 ├── scripts/
 │   ├── openai_classify.py           # PEP 723: deps inline, runs via `uv run -s`
 │   ├── anthropic_classify.py
 │   └── gemini_classify.py
-└── pipelines/
-    ├── openai-http.yaml             # http processor → api.openai.com
-    ├── openai-sdk.yaml              # subprocess → uv run -s openai_classify.py
-    ├── anthropic-http.yaml          # http processor → api.anthropic.com
-    ├── anthropic-sdk.yaml           # subprocess → anthropic_classify.py
-    ├── gemini-http.yaml             # http processor → generativelanguage.googleapis.com
-    └── gemini-sdk.yaml              # subprocess → gemini_classify.py
+├── pipelines/
+│   ├── openai-http.yaml             # http processor → api.openai.com
+│   ├── openai-sdk.yaml              # subprocess → uv run -s openai_classify.py
+│   ├── anthropic-http.yaml          # http processor → api.anthropic.com
+│   ├── anthropic-sdk.yaml           # subprocess → anthropic_classify.py
+│   ├── gemini-http.yaml             # http processor → generativelanguage.googleapis.com
+│   └── gemini-sdk.yaml              # subprocess → gemini_classify.py
+└── tests/                           # pytest unit + structure + smoke tests
 ```
 
 ## Quickstart
 
 ```bash
-# 1. Set keys
-cp .env.example .env
-# edit .env with real OPENAI_API_KEY / ANTHROPIC_API_KEY / GEMINI_API_KEY
+# 1. Set keys (any shell; .env is gitignored)
+export OPENAI_API_KEY=sk-... ANTHROPIC_API_KEY=sk-ant-... GEMINI_API_KEY=...
 
 # 2. Validate every pipeline (offline, no API calls)
-for f in pipelines/*.yaml; do expanso-cli job validate --offline "$f"; done
+make validate
 
-# 3. Run an HTTP-direct demo (no build needed, uses stock expanso-edge image)
-docker compose run --rm openai-http
+# 3. Build the runner image (first time: ~90s; cached afterwards)
+docker compose build openai-http
 
-# 4. Run an SDK-mode demo (first run builds the runner image, ~2 min)
-docker compose run --rm openai-sdk
+# 4. Run a demo
+docker compose run --rm openai-http      # HTTP-direct
+docker compose run --rm openai-sdk       # SDK via subprocess
 
 # 5. Tear down
 docker compose down -v
 ```
+
+## How the runner image works
+
+Every demo service uses a single image (`Dockerfile`) that layers `expanso-cli` and `uv` on top of `expanso-edge:nightly`. The `run-demo` entrypoint orchestrates the agent + CLI handshake that Expanso requires:
+
+1. Starts `expanso-edge run --local` in the background
+2. Waits for the local agent's API to come up
+3. `expanso-cli job deploy <pipeline.yaml>` pushes the job to the local agent
+4. Tails the agent so the pipeline's stdout flows out to the container
+
+This is why `docker compose run --rm openai-http` "just works" without you needing to coordinate two processes by hand.
+
+## Tests
+
+- `make test` — fast tests (mocked SDKs, YAML structure, compose structure). 97 tests, ~1s.
+- `make test-smoke` — E2E pipeline test through Docker with a stub classifier (no API keys, no LLM calls). 2 tests, ~5s warm / ~90s cold.
+- `make test-all` — both.
+- `make verify` — lint + fast tests + pipeline validation + compose config (CI parity).
 
 ## How the two modes compare
 
