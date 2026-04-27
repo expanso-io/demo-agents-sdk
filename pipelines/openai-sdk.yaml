@@ -1,6 +1,8 @@
 # =============================================================================
-# OpenAI — SDK sidecar: pipeline routes events to the openai sidecar service,
-# which uses the official `openai` Python SDK to talk to api.openai.com.
+# OpenAI — SDK via subprocess: pipeline runs `uv run -s openai_classify.py`
+# as a long-lived child process. The script imports `openai` once at startup,
+# then loops on stdin per message. SDK retries, structured output, and any
+# future SDK features come for free without leaving the pipeline.
 # Validate: expanso-cli job validate --offline pipelines/openai-sdk.yaml
 # =============================================================================
 ---
@@ -14,26 +16,9 @@ config:
 
   pipeline:
     processors:
-      - mapping: |
-          root = content().parse_json()
-
-      - branch:
-          request_map: |
-            root.id = this.id
-            root.message = this.message
-          processors:
-            - http:
-                url: http://openai-sidecar:8001/classify
-                verb: POST
-                headers:
-                  Content-Type: application/json
-                retries: 2
-          result_map: |
-            root.category = this.category
-            root.sentiment = this.sentiment
-            root.priority = this.priority
-            root._provider = "openai"
-            root._mode = "sdk"
+      - subprocess:
+          name: uv
+          args: ["run", "-s", "/scripts/openai_classify.py"]
 
   output:
     stdout:

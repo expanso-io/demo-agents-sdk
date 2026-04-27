@@ -1,120 +1,76 @@
 # =============================================================================
-# demo-agents-sdk — runs sidecars + one-shot pipeline executors.
+# demo-agents-sdk — one-shot pipeline runners.
+#
+# HTTP-direct pipelines use the stock expanso-edge image. SDK-mode pipelines
+# use a thin layer (`./Dockerfile`) that adds `uv` so each provider's
+# classifier script can run via `uv run -s` with PEP 723 inline deps.
 #
 # Examples:
-#   docker compose run --rm openai-http       # HTTP-direct, no sidecar needed
-#   docker compose --profile openai-sdk up -d openai-sidecar
-#   docker compose run --rm openai-sdk        # SDK sidecar variant
-#   docker compose down -v
+#   docker compose run --rm openai-http
+#   docker compose run --rm openai-sdk
+#   docker compose run --rm anthropic-http
+#   docker compose run --rm anthropic-sdk
+#   docker compose run --rm gemini-http
+#   docker compose run --rm gemini-sdk
 # =============================================================================
 
+x-edge-stock: &edge-stock
+  image: ghcr.io/expanso-io/expanso-edge:nightly
+  volumes:
+    - ./pipelines:/pipelines:ro
+    - ./data:/data:ro
+
+x-edge-runner: &edge-runner
+  build: .
+  image: demo-agents-sdk-runner
+  volumes:
+    - ./pipelines:/pipelines:ro
+    - ./data:/data:ro
+    - ./scripts:/scripts:ro
+    - uv-cache:/root/.cache/uv
+
 services:
-  # ---------- SDK sidecars (long-running) ----------
-  openai-sidecar:
-    build: ./sidecars/openai
-    image: demo-agents-sdk-openai-sidecar
-    environment:
-      - OPENAI_API_KEY
-      - OPENAI_MODEL
-    ports: ["8001:8001"]
-    profiles: [sidecars, openai-sdk]
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/healthz')"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-  anthropic-sidecar:
-    build: ./sidecars/anthropic
-    image: demo-agents-sdk-anthropic-sidecar
-    environment:
-      - ANTHROPIC_API_KEY
-      - ANTHROPIC_MODEL
-    ports: ["8002:8002"]
-    profiles: [sidecars, anthropic-sdk]
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/healthz')"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-  gemini-sidecar:
-    build: ./sidecars/gemini
-    image: demo-agents-sdk-gemini-sidecar
-    environment:
-      - GEMINI_API_KEY
-      - GEMINI_MODEL
-    ports: ["8003:8003"]
-    profiles: [sidecars, gemini-sdk]
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/healthz')"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-  # ---------- Pipeline runners (one-shot via `docker compose run`) ----------
   openai-http:
-    image: ghcr.io/expanso-io/expanso-edge:nightly
+    <<: *edge-stock
     command: ["run", "/pipelines/openai-http.yaml"]
     environment:
       - OPENAI_API_KEY
       - OPENAI_MODEL
-    volumes:
-      - ./pipelines:/pipelines:ro
-      - ./data:/data:ro
-    profiles: [openai-http]
 
   openai-sdk:
-    image: ghcr.io/expanso-io/expanso-edge:nightly
+    <<: *edge-runner
     command: ["run", "/pipelines/openai-sdk.yaml"]
-    volumes:
-      - ./pipelines:/pipelines:ro
-      - ./data:/data:ro
-    depends_on:
-      openai-sidecar:
-        condition: service_healthy
-    profiles: [openai-sdk]
+    environment:
+      - OPENAI_API_KEY
+      - OPENAI_MODEL
 
   anthropic-http:
-    image: ghcr.io/expanso-io/expanso-edge:nightly
+    <<: *edge-stock
     command: ["run", "/pipelines/anthropic-http.yaml"]
     environment:
       - ANTHROPIC_API_KEY
       - ANTHROPIC_MODEL
-    volumes:
-      - ./pipelines:/pipelines:ro
-      - ./data:/data:ro
-    profiles: [anthropic-http]
 
   anthropic-sdk:
-    image: ghcr.io/expanso-io/expanso-edge:nightly
+    <<: *edge-runner
     command: ["run", "/pipelines/anthropic-sdk.yaml"]
-    volumes:
-      - ./pipelines:/pipelines:ro
-      - ./data:/data:ro
-    depends_on:
-      anthropic-sidecar:
-        condition: service_healthy
-    profiles: [anthropic-sdk]
+    environment:
+      - ANTHROPIC_API_KEY
+      - ANTHROPIC_MODEL
 
   gemini-http:
-    image: ghcr.io/expanso-io/expanso-edge:nightly
+    <<: *edge-stock
     command: ["run", "/pipelines/gemini-http.yaml"]
     environment:
       - GEMINI_API_KEY
       - GEMINI_MODEL
-    volumes:
-      - ./pipelines:/pipelines:ro
-      - ./data:/data:ro
-    profiles: [gemini-http]
 
   gemini-sdk:
-    image: ghcr.io/expanso-io/expanso-edge:nightly
+    <<: *edge-runner
     command: ["run", "/pipelines/gemini-sdk.yaml"]
-    volumes:
-      - ./pipelines:/pipelines:ro
-      - ./data:/data:ro
-    depends_on:
-      gemini-sidecar:
-        condition: service_healthy
-    profiles: [gemini-sdk]
+    environment:
+      - GEMINI_API_KEY
+      - GEMINI_MODEL
+
+volumes:
+  uv-cache:
