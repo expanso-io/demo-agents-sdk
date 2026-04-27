@@ -1,0 +1,40 @@
+# =============================================================================
+# OpenAI — SDK sidecar: pipeline routes events to the openai sidecar service,
+# which uses the official `openai` Python SDK to talk to api.openai.com.
+# Validate: expanso-cli job validate --offline pipelines/openai-sdk.yaml
+# =============================================================================
+---
+name: openai-sdk
+type: pipeline
+config:
+  input:
+    file:
+      paths: [/data/events.jsonl]
+      codec: lines
+
+  pipeline:
+    processors:
+      - mapping: |
+          root = content().parse_json()
+
+      - branch:
+          request_map: |
+            root.id = this.id
+            root.message = this.message
+          processors:
+            - http:
+                url: http://openai-sidecar:8001/classify
+                verb: POST
+                headers:
+                  Content-Type: application/json
+                retries: 2
+          result_map: |
+            root.category = this.category
+            root.sentiment = this.sentiment
+            root.priority = this.priority
+            root._provider = "openai"
+            root._mode = "sdk"
+
+  output:
+    stdout:
+      codec: lines

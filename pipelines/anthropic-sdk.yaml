@@ -1,0 +1,40 @@
+# =============================================================================
+# Anthropic — SDK sidecar: pipeline routes events to the anthropic sidecar,
+# which uses the official `anthropic` Python SDK.
+# Validate: expanso-cli job validate --offline pipelines/anthropic-sdk.yaml
+# =============================================================================
+---
+name: anthropic-sdk
+type: pipeline
+config:
+  input:
+    file:
+      paths: [/data/events.jsonl]
+      codec: lines
+
+  pipeline:
+    processors:
+      - mapping: |
+          root = content().parse_json()
+
+      - branch:
+          request_map: |
+            root.id = this.id
+            root.message = this.message
+          processors:
+            - http:
+                url: http://anthropic-sidecar:8002/classify
+                verb: POST
+                headers:
+                  Content-Type: application/json
+                retries: 2
+          result_map: |
+            root.category = this.category
+            root.sentiment = this.sentiment
+            root.priority = this.priority
+            root._provider = "anthropic"
+            root._mode = "sdk"
+
+  output:
+    stdout:
+      codec: lines

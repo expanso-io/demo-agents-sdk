@@ -1,0 +1,48 @@
+# =============================================================================
+# Anthropic — HTTP-direct: pipeline calls api.anthropic.com from Expanso Edge.
+# Validate: expanso-cli job validate --offline pipelines/anthropic-http.yaml
+# =============================================================================
+---
+name: anthropic-http
+type: pipeline
+config:
+  input:
+    file:
+      paths: [/data/events.jsonl]
+      codec: lines
+
+  pipeline:
+    processors:
+      - mapping: |
+          root = content().parse_json()
+
+      - branch:
+          request_map: |
+            root.model = "${ANTHROPIC_MODEL:-claude-haiku-4-5-20251001}"
+            root.max_tokens = 200
+            root.system = "Classify support tickets. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}"
+            root.messages = [
+              {"role": "user", "content": this.message}
+            ]
+          processors:
+            - http:
+                url: https://api.anthropic.com/v1/messages
+                verb: POST
+                headers:
+                  Content-Type: application/json
+                  x-api-key: ${ANTHROPIC_API_KEY}
+                  anthropic-version: "2023-06-01"
+                retries: 2
+          result_map: |
+            # Anthropic doesn't have a json_object flag — extract first {...}
+            let raw = this.content.0.text
+            let parsed = raw.re_find("(?s)\\{.*\\}").parse_json()
+            root.category = parsed.category
+            root.sentiment = parsed.sentiment
+            root.priority = parsed.priority
+            root._provider = "anthropic"
+            root._mode = "http"
+
+  output:
+    stdout:
+      codec: lines

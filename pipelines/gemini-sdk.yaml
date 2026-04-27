@@ -1,0 +1,40 @@
+# =============================================================================
+# Gemini — SDK sidecar: pipeline routes events to the gemini sidecar,
+# which uses the official `google-genai` Python SDK with response_schema.
+# Validate: expanso-cli job validate --offline pipelines/gemini-sdk.yaml
+# =============================================================================
+---
+name: gemini-sdk
+type: pipeline
+config:
+  input:
+    file:
+      paths: [/data/events.jsonl]
+      codec: lines
+
+  pipeline:
+    processors:
+      - mapping: |
+          root = content().parse_json()
+
+      - branch:
+          request_map: |
+            root.id = this.id
+            root.message = this.message
+          processors:
+            - http:
+                url: http://gemini-sidecar:8003/classify
+                verb: POST
+                headers:
+                  Content-Type: application/json
+                retries: 2
+          result_map: |
+            root.category = this.category
+            root.sentiment = this.sentiment
+            root.priority = this.priority
+            root._provider = "gemini"
+            root._mode = "sdk"
+
+  output:
+    stdout:
+      codec: lines
