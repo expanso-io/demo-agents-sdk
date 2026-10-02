@@ -13,7 +13,7 @@ help:
 	@echo "  lint           ruff check"
 	@echo "  format         ruff format"
 	@echo "  validate       expanso-cli validate every pipeline YAML"
-	@echo "  compose-config docker compose config (validates docker-compose.yaml)"
+	@echo "  compose-config validate the fixture-mode Docker runners"
 	@echo "  build          docker compose build runner image"
 	@echo "  verify         lint + test + validate + compose-config (no Docker build)"
 	@echo "  clean          remove pytest/ruff caches"
@@ -41,12 +41,10 @@ validate:
 	done
 
 compose-config:
-	@OPENAI_API_KEY=test ANTHROPIC_API_KEY=test GEMINI_API_KEY=test \
-	 OPENAI_MODEL=stub ANTHROPIC_MODEL=stub GEMINI_MODEL=stub \
-	 docker compose config --quiet && echo "compose config: OK"
+	@docker compose config --quiet && echo "compose config: OK"
 
 build:
-	docker compose build openai-sdk
+	docker compose build gateway-subprocess
 
 verify: lint test validate compose-config
 	@echo "All quality checks passed."

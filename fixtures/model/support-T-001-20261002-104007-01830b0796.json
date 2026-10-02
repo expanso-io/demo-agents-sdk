@@ -1,0 +1,10 @@
+{
+ "prompt_sha256": "01830b0796c70ca4dafb52139b66cb8e72866f37012d1324cbf40f41291a398d",
+ "name": "support-T-001",
+ "backend": "gemini",
+ "model": "gemini-3.8-flash-low",
+ "recorded_at": "2026-10-02T10:40:07-0700",
+ "system_sha256": "60084836b3ddb40ae2516f857fd3d183c28d5b905613557c8b8e40099e84014c",
+ "prompt_head": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP.",
+ "text": "{\"category\":\"billing\",\"sentiment\":\"neg\",\"priority\":\"high\"}"
+}

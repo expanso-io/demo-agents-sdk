@@ -1,0 +1,18 @@
+# Fixture replay is the default. Live recording uses one subscription backend:
+# GATEWAY_MODE=live GATEWAY_BACKEND=gemini GATEWAY_RECORD=1 just gateway-up
+port = 18157
+fixtures = "fixtures/model"
+state = ".runtime/gateway"
+timeout_s = 240
+
+[caps]
+per_run = 4
+per_minute = 4
+per_day = 20
+
+[models]
+claude = "sonnet"
+gemini = "gemini-3.8-flash-low"
+codex = ""
+kimi = ""
+local = "ministral-3:3b"

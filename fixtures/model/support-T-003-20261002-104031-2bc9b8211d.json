@@ -1,0 +1,10 @@
+{
+ "prompt_sha256": "2bc9b8211d53ceda59dda1f782a3b9d8a2ff5e9b0311e22b461da57253d36e34",
+ "name": "support-T-003",
+ "backend": "gemini",
+ "model": "gemini-3.8-flash-low",
+ "recorded_at": "2026-10-02T10:40:31-0700",
+ "system_sha256": "60084836b3ddb40ae2516f857fd3d183c28d5b905613557c8b8e40099e84014c",
+ "prompt_head": "How do I add a second user to my account? I can't find the option in settings.",
+ "text": "{\"category\":\"account\",\"sentiment\":\"neu\",\"priority\":\"med\"}"
+}

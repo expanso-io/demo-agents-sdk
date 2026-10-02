@@ -7,7 +7,7 @@
 # An entrypoint wrapper (run-demo.sh) orchestrates them so a single
 # `docker compose run` lifts both up and tears down cleanly.
 #
-# uv handles Python + SDK dep install on demand for the SDK-mode pipelines.
+# uv runs the standard-library gateway client and the mounted demo-kit gateway.
 
 FROM ghcr.io/astral-sh/uv:latest AS uv
 

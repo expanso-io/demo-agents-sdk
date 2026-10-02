@@ -1,68 +1,29 @@
-# =============================================================================
-# demo-agents-sdk — one-shot pipeline runners.
-#
-# Every service uses the local runner image (expanso-edge + expanso-cli + uv).
-# The image's `run-demo` entrypoint starts the agent in --local mode, deploys
-# the pipeline via expanso-cli, then tails the agent so pipeline output lands
-# on the container's stdout.
-#
-# Examples:
-#   docker compose run --rm openai-http
-#   docker compose run --rm openai-sdk
-#   docker compose down -v
-# =============================================================================
-
+# One-shot fixture-mode runners. The demo-kit is mounted read-only so the
+# entrypoint can start the shared gateway inside the same container as Edge.
 x-runner: &runner
   build: .
   image: demo-agents-sdk-runner
+  working_dir: /workspace
   volumes:
     - ./pipelines:/pipelines:ro
     - ./data:/data:ro
     - ./scripts:/scripts:ro
+    - ./:/workspace:ro
+    - ../_demo-kit:/demo-kit:ro
+    - gateway-state:/workspace/.runtime
     - uv-cache:/root/.cache/uv
+  environment:
+    - MODEL_GATEWAY_CONFIG=/workspace/model-gateway.toml
 
 services:
-  openai-http:
+  gateway-http:
     <<: *runner
-    command: ["/pipelines/openai-http.yaml"]
-    environment:
-      - OPENAI_API_KEY
-      - OPENAI_MODEL
+    command: ["/pipelines/gateway-http.yaml"]
 
-  openai-sdk:
+  gateway-subprocess:
     <<: *runner
-    command: ["/pipelines/openai-sdk.yaml"]
-    environment:
-      - OPENAI_API_KEY
-      - OPENAI_MODEL
-
-  anthropic-http:
-    <<: *runner
-    command: ["/pipelines/anthropic-http.yaml"]
-    environment:
-      - ANTHROPIC_API_KEY
-      - ANTHROPIC_MODEL
-
-  anthropic-sdk:
-    <<: *runner
-    command: ["/pipelines/anthropic-sdk.yaml"]
-    environment:
-      - ANTHROPIC_API_KEY
-      - ANTHROPIC_MODEL
-
-  gemini-http:
-    <<: *runner
-    command: ["/pipelines/gemini-http.yaml"]
-    environment:
-      - GEMINI_API_KEY
-      - GEMINI_MODEL
-
-  gemini-sdk:
-    <<: *runner
-    command: ["/pipelines/gemini-sdk.yaml"]
-    environment:
-      - GEMINI_API_KEY
-      - GEMINI_MODEL
+    command: ["/pipelines/gateway-subprocess.yaml"]
 
 volumes:
+  gateway-state:
   uv-cache:

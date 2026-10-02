@@ -1,0 +1,42 @@
+# Model gateway over HTTP. The gateway defaults to committed fixture replay.
+---
+name: gateway-http
+type: pipeline
+config:
+  input:
+    file:
+      paths: [data/events.jsonl]
+      codec: lines
+  pipeline:
+    processors:
+      - mapping: |
+          root = content().parse_json()
+      - branch:
+          request_map: |
+            root.prompt = this.message
+            root.system = "Classify this support ticket. " +
+              "Respond with strict JSON only, no prose: " +
+              "{\"category\":\"billing|technical|account|other\"," +
+              "\"sentiment\":\"pos|neg|neu\"," +
+              "\"priority\":\"low|med|high\"}"
+            root.fixture = "support-" + this.id
+          processors:
+            - http:
+                url: http://127.0.0.1:18157/ask
+                verb: POST
+                headers:
+                  Content-Type: application/json
+                retries: 0
+          result_map: |
+            let parsed = this.text.parse_json()
+            root.category = $parsed.category
+            root.sentiment = $parsed.sentiment
+            root.priority = $parsed.priority
+            root._gateway_source = this.source
+            root._mode = "http"
+      - log:
+          level: INFO
+          message: 'classified ${! json("id") } through the model gateway'
+  output:
+    stdout:
+      codec: lines

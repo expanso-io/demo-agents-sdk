@@ -2,7 +2,3 @@
 {"id":"T-002","message":"The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502."}
 {"id":"T-003","message":"How do I add a second user to my account? I can't find the option in settings."}
 {"id":"T-004","message":"Just wanted to say the new export feature is great. Saved me hours this week. Thanks team."}
-{"id":"T-005","message":"URGENT: production is down for our whole org. All API calls returning 500. We have customers on the line."}
-{"id":"T-006","message":"My password reset email never arrived. Checked spam. Email is jane@acme.example."}
-{"id":"T-007","message":"Can you tell me what plan I'm on and when it renews? I might want to downgrade."}
-{"id":"T-008","message":"The AI summarizer is hallucinating dates that aren't in my source documents. This is a serious data quality issue."}

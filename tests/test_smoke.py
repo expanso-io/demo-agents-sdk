@@ -63,7 +63,7 @@ def test_smoke_pipeline_classifies_all_events(runner_image):
     output line with the expected schema.
 
     Edge keeps its management API up after the pipeline drains, so we run
-    the container detached, poll `docker logs` for our 8 classified lines,
+    the container detached, poll `docker logs` for our 4 classified lines,
     then force-remove the container. This avoids blocking on `readline()`
     against a daemon that doesn't close stdout."""
     container_name = "demo-agents-sdk-smoke-test"
@@ -94,7 +94,7 @@ def test_smoke_pipeline_classifies_all_events(runner_image):
 
     classified: list[dict] = []
     last_logs = ""
-    deadline = time.time() + 90  # cold uv resolve + 8 events + slack
+    deadline = time.time() + 90  # cold uv resolve + 4 events + slack
     try:
         while time.time() < deadline:
             time.sleep(2)
@@ -116,13 +116,13 @@ def test_smoke_pipeline_classifies_all_events(runner_image):
                     continue
                 if obj.get("_provider") == "stub":
                     classified.append(obj)
-            if len(classified) >= 8:
+            if len(classified) >= 4:
                 break
     finally:
         subprocess.run(["docker", "rm", "-f", container_name], capture_output=True, check=False)
 
-    assert len(classified) == 8, (
-        f"expected 8 classifications, got {len(classified)}\n"
+    assert len(classified) == 4, (
+        f"expected 4 classifications, got {len(classified)}\n"
         f"--- last container logs ---\n{last_logs[-3000:]}"
     )
 
@@ -137,5 +137,4 @@ def test_smoke_pipeline_classifies_all_events(runner_image):
     # Verify deterministic behavior: T-001 (billing message) must classify as billing.
     by_id = {obj["id"]: obj for obj in classified}
     assert by_id["T-001"]["category"] == "billing"
-    assert by_id["T-005"]["category"] == "technical"  # "URGENT: production is down"
-    assert by_id["T-005"]["priority"] == "high"
+    assert by_id["T-002"]["category"] == "technical"

@@ -1,0 +1,20 @@
+# Model gateway through one long-lived Python client process.
+---
+name: gateway-subprocess
+type: pipeline
+config:
+  input:
+    file:
+      paths: [data/events.jsonl]
+      codec: lines
+  pipeline:
+    processors:
+      - subprocess:
+          name: uv
+          args: ["run", "-s", "scripts/gateway_classify.py"]
+      - log:
+          level: INFO
+          message: 'classified ${! json("id") } through the model gateway'
+  output:
+    stdout:
+      codec: lines

@@ -31,13 +31,6 @@ jobs:
         run: uv run --group dev pytest -m "not smoke"
 
       - name: Docker Compose config validates
-        env:
-          OPENAI_API_KEY: test
-          ANTHROPIC_API_KEY: test
-          GEMINI_API_KEY: test
-          OPENAI_MODEL: stub
-          ANTHROPIC_MODEL: stub
-          GEMINI_MODEL: stub
         run: docker compose config --quiet
 
   smoke:

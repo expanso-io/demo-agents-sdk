@@ -1,0 +1,10 @@
+{
+ "prompt_sha256": "b401f8b0426bb72a8d7389e672176e887696840e14b82de67ec67d2a862f1e5f",
+ "name": "support-T-002",
+ "backend": "gemini",
+ "model": "gemini-3.8-flash-low",
+ "recorded_at": "2026-10-02T10:40:19-0700",
+ "system_sha256": "60084836b3ddb40ae2516f857fd3d183c28d5b905613557c8b8e40099e84014c",
+ "prompt_head": "The dashboard won't load \u2014 I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502.",
+ "text": "{\"category\":\"technical\",\"sentiment\":\"neg\",\"priority\":\"high\"}"
+}
