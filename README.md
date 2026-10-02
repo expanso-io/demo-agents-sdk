@@ -1,5 +1,7 @@
 # demo-agents-sdk
 
+Built off potential user requirements for integrating cloud LLM SDKs directly into edge data pipelines.
+
 Reference demo: **calling cloud LLM SDKs from inside an [Expanso Edge](https://expanso.io) pipeline.**
 
 Each provider (OpenAI, Anthropic, Gemini) is shown two ways so you can see the trade-offs side-by-side:
