@@ -28,7 +28,7 @@ def fake_classification(message: str) -> dict:
     text = message.lower()
     if any(word in text for word in ("charge", "refund", "billing", "subscription")):
         category = "billing"
-    elif any(word in text for word in ("urgent", "down", "error", "broken")):
+    elif any(word in text for word in ("urgent", "down", "error", "broken", "502")):
         category = "technical"
     elif any(word in text for word in ("user", "password", "account")):
         category = "account"
