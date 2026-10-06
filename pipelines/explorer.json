@@ -1,0 +1,1283 @@
+{
+  "schema": 1,
+  "tickets": [
+    {
+      "id": "T-001",
+      "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP.",
+      "kind": "recorded"
+    },
+    {
+      "id": "T-002",
+      "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502.",
+      "kind": "recorded"
+    },
+    {
+      "id": "T-003",
+      "message": "How do I add a second user to my account? I can't find the option in settings.",
+      "kind": "recorded"
+    },
+    {
+      "id": "T-004",
+      "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team.",
+      "kind": "recorded"
+    },
+    {
+      "id": "T-900",
+      "message": "Can I change the invoice currency from USD to EUR for next month?",
+      "kind": "no recorded answer"
+    }
+  ],
+  "omitted_gateway_fields": [
+    "backend",
+    "model",
+    "recorded_at"
+  ],
+  "paths": [
+    {
+      "id": "gateway-http",
+      "title": "HTTP in the pipeline",
+      "pipeline": "pipelines/gateway-http.yaml",
+      "yaml": "# Model gateway over HTTP: the pipeline builds the request itself.\n---\nname: gateway-http\ndescription: Classify support tickets through the node-local model gateway over HTTP\ntype: pipeline\nselector:\n  match_labels:\n    demo: demo-agents-sdk\nconfig:\n  input:\n    label: tickets\n    file:\n      paths: [data/events.jsonl]\n      codec: lines\n  pipeline:\n    threads: 1\n    processors:\n      - label: parse_ticket\n        mapping: |\n          root = content().parse_json()\n      - label: ask_gateway\n        branch:\n          request_map: |\n            root.prompt = this.message\n            root.system = \"Classify this support ticket. \" +\n              \"Respond with strict JSON only, no prose: \" +\n              \"{\\\"category\\\":\\\"billing|technical|account|other\\\",\" +\n              \"\\\"sentiment\\\":\\\"pos|neg|neu\\\",\" +\n              \"\\\"priority\\\":\\\"low|med|high\\\"}\"\n            root.fixture = \"support-\" + this.id\n          processors:\n            - http:\n                url: http://127.0.0.1:18157/ask\n                verb: POST\n                headers:\n                  Content-Type: application/json\n                timeout: 30s\n                retries: 5\n                retry_period: 2s\n          result_map: |\n            let parsed = this.text.parse_json()\n            root.category = $parsed.category\n            root.sentiment = $parsed.sentiment\n            root.priority = $parsed.priority\n            root._gateway_source = this.source\n            root._mode = \"http\"\n      - label: record_failure\n        catch:\n          - label: failure_record\n            mapping: |\n              root.id = this.id\n              root.error = error()\n              root._gateway_source = \"error\"\n              root._mode = \"http\"\n          - label: log_failure\n            log:\n              level: WARN\n              message: 'gateway failed for ${! json(\"id\") }: ${! json(\"error\") }'\n      - label: log_result\n        log:\n          level: INFO\n          message: 'classified ${! json(\"id\") } through the model gateway'\n  output:\n    label: classified\n    stdout:\n      codec: lines\n",
+      "summary": "The pipeline builds the gateway request itself with a branch, so there is no child process.",
+      "stages": [
+        {
+          "id": "read",
+          "title": "Read the ticket",
+          "component": "input: tickets (file)",
+          "about": "The file input emits one message per line of data/events.jsonl.",
+          "code": "input:\n  label: tickets\n  file:\n    paths: [data/events.jsonl]\n    codec: lines",
+          "io": {
+            "T-001": {
+              "input": {
+                "file": "data/events.jsonl"
+              },
+              "output": {
+                "id": "T-001",
+                "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP."
+              }
+            },
+            "T-002": {
+              "input": {
+                "file": "data/events.jsonl"
+              },
+              "output": {
+                "id": "T-002",
+                "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502."
+              }
+            },
+            "T-003": {
+              "input": {
+                "file": "data/events.jsonl"
+              },
+              "output": {
+                "id": "T-003",
+                "message": "How do I add a second user to my account? I can't find the option in settings."
+              }
+            },
+            "T-004": {
+              "input": {
+                "file": "data/events.jsonl"
+              },
+              "output": {
+                "id": "T-004",
+                "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team."
+              }
+            },
+            "T-900": {
+              "input": {
+                "file": "data/events.jsonl"
+              },
+              "output": {
+                "id": "T-900",
+                "message": "Can I change the invoice currency from USD to EUR for next month?"
+              }
+            }
+          },
+          "data_stage": "gateway-http.read",
+          "fixtures": {
+            "input": "fixtures/stages/gateway-http/01-read.input.jsonl",
+            "output": "fixtures/stages/gateway-http/01-read.output.jsonl"
+          }
+        },
+        {
+          "id": "parse",
+          "title": "Parse the line",
+          "component": "mapping: parse_ticket",
+          "about": "The text line becomes a structured message, so later stages read its fields.",
+          "code": "- label: parse_ticket\n  mapping: |\n    root = content().parse_json()",
+          "io": {
+            "T-001": {
+              "input": {
+                "id": "T-001",
+                "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP."
+              },
+              "output": {
+                "id": "T-001",
+                "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP."
+              }
+            },
+            "T-002": {
+              "input": {
+                "id": "T-002",
+                "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502."
+              },
+              "output": {
+                "id": "T-002",
+                "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502."
+              }
+            },
+            "T-003": {
+              "input": {
+                "id": "T-003",
+                "message": "How do I add a second user to my account? I can't find the option in settings."
+              },
+              "output": {
+                "id": "T-003",
+                "message": "How do I add a second user to my account? I can't find the option in settings."
+              }
+            },
+            "T-004": {
+              "input": {
+                "id": "T-004",
+                "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team."
+              },
+              "output": {
+                "id": "T-004",
+                "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team."
+              }
+            },
+            "T-900": {
+              "input": {
+                "id": "T-900",
+                "message": "Can I change the invoice currency from USD to EUR for next month?"
+              },
+              "output": {
+                "id": "T-900",
+                "message": "Can I change the invoice currency from USD to EUR for next month?"
+              }
+            }
+          },
+          "data_stage": "gateway-http.parse",
+          "fixtures": {
+            "input": "fixtures/stages/gateway-http/02-parse.input.jsonl",
+            "output": "fixtures/stages/gateway-http/02-parse.output.jsonl"
+          }
+        },
+        {
+          "id": "request",
+          "title": "Build the request",
+          "component": "branch: ask_gateway, request_map",
+          "about": "The request map writes the ticket text, the classification instruction and the fixture name into the body sent to the gateway.",
+          "code": "request_map: |\n  root.prompt = this.message\n  root.system = \"Classify this support ticket. \" +\n    \"Respond with strict JSON only, no prose: \" +\n    \"{\\\"category\\\":\\\"billing|technical|account|other\\\",\" +\n    \"\\\"sentiment\\\":\\\"pos|neg|neu\\\",\" +\n    \"\\\"priority\\\":\\\"low|med|high\\\"}\"\n  root.fixture = \"support-\" + this.id",
+          "io": {
+            "T-001": {
+              "input": {
+                "id": "T-001",
+                "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP."
+              },
+              "output": {
+                "fixture": "support-T-001",
+                "prompt": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}"
+              }
+            },
+            "T-002": {
+              "input": {
+                "id": "T-002",
+                "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502."
+              },
+              "output": {
+                "fixture": "support-T-002",
+                "prompt": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}"
+              }
+            },
+            "T-003": {
+              "input": {
+                "id": "T-003",
+                "message": "How do I add a second user to my account? I can't find the option in settings."
+              },
+              "output": {
+                "fixture": "support-T-003",
+                "prompt": "How do I add a second user to my account? I can't find the option in settings.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}"
+              }
+            },
+            "T-004": {
+              "input": {
+                "id": "T-004",
+                "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team."
+              },
+              "output": {
+                "fixture": "support-T-004",
+                "prompt": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}"
+              }
+            },
+            "T-900": {
+              "input": {
+                "id": "T-900",
+                "message": "Can I change the invoice currency from USD to EUR for next month?"
+              },
+              "output": {
+                "fixture": "support-T-900",
+                "prompt": "Can I change the invoice currency from USD to EUR for next month?",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}"
+              }
+            }
+          },
+          "data_stage": "gateway-http.request",
+          "fixtures": {
+            "input": "fixtures/stages/gateway-http/03-request.input.jsonl",
+            "output": "fixtures/stages/gateway-http/03-request.output.jsonl"
+          }
+        },
+        {
+          "id": "reply",
+          "title": "Ask the gateway",
+          "component": "branch: ask_gateway, http",
+          "about": "One POST to the node-local gateway. It retries for up to ten seconds, which covers the gateway starting after the pipeline. A ticket with no recorded answer returns 404 and is not retried.",
+          "code": "- http:\n    url: http://127.0.0.1:18157/ask\n    verb: POST\n    headers:\n      Content-Type: application/json\n    timeout: 30s\n    retries: 5\n    retry_period: 2s",
+          "io": {
+            "T-001": {
+              "input": {
+                "fixture": "support-T-001",
+                "prompt": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}"
+              },
+              "output": {
+                "http_status": 200,
+                "body": {
+                  "key": "01830b0796c70ca4dafb52139b66cb8e72866f37012d1324cbf40f41291a398d",
+                  "match": "prompt",
+                  "source": "fixture",
+                  "status": "ok",
+                  "text": "{\"category\":\"billing\",\"sentiment\":\"neg\",\"priority\":\"high\"}"
+                }
+              }
+            },
+            "T-002": {
+              "input": {
+                "fixture": "support-T-002",
+                "prompt": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}"
+              },
+              "output": {
+                "http_status": 200,
+                "body": {
+                  "key": "b401f8b0426bb72a8d7389e672176e887696840e14b82de67ec67d2a862f1e5f",
+                  "match": "prompt",
+                  "source": "fixture",
+                  "status": "ok",
+                  "text": "{\"category\":\"technical\",\"sentiment\":\"neg\",\"priority\":\"high\"}"
+                }
+              }
+            },
+            "T-003": {
+              "input": {
+                "fixture": "support-T-003",
+                "prompt": "How do I add a second user to my account? I can't find the option in settings.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}"
+              },
+              "output": {
+                "http_status": 200,
+                "body": {
+                  "key": "2bc9b8211d53ceda59dda1f782a3b9d8a2ff5e9b0311e22b461da57253d36e34",
+                  "match": "prompt",
+                  "source": "fixture",
+                  "status": "ok",
+                  "text": "{\"category\":\"account\",\"sentiment\":\"neu\",\"priority\":\"med\"}"
+                }
+              }
+            },
+            "T-004": {
+              "input": {
+                "fixture": "support-T-004",
+                "prompt": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}"
+              },
+              "output": {
+                "http_status": 200,
+                "body": {
+                  "key": "7205880a2b78b369fd153fa11b0036641bb40a2956ef8ef59b75b6409f2ece99",
+                  "match": "prompt",
+                  "source": "fixture",
+                  "status": "ok",
+                  "text": "{\"category\":\"other\",\"sentiment\":\"pos\",\"priority\":\"low\"}"
+                }
+              }
+            },
+            "T-900": {
+              "input": {
+                "fixture": "support-T-900",
+                "prompt": "Can I change the invoice currency from USD to EUR for next month?",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}"
+              },
+              "output": {
+                "http_status": 404,
+                "body": {
+                  "status": "no_fixture",
+                  "key": "bfde1831ccb02781f4449824aa0aa1949bbbb6cb0c8119abf93f707a2036ff39",
+                  "reason": "fixture mode: no recorded answer for this prompt"
+                }
+              }
+            }
+          },
+          "data_stage": "gateway-http.reply",
+          "fixtures": {
+            "input": "fixtures/stages/gateway-http/04-reply.input.jsonl",
+            "output": "fixtures/stages/gateway-http/04-reply.output.jsonl"
+          }
+        },
+        {
+          "id": "merge",
+          "title": "Merge the answer",
+          "component": "branch: ask_gateway, result_map",
+          "about": "The result map parses the answer text and adds category, sentiment and priority to the original ticket, plus where the answer came from.",
+          "code": "result_map: |\n  let parsed = this.text.parse_json()\n  root.category = $parsed.category\n  root.sentiment = $parsed.sentiment\n  root.priority = $parsed.priority\n  root._gateway_source = this.source\n  root._mode = \"http\"",
+          "io": {
+            "T-001": {
+              "input": {
+                "key": "01830b0796c70ca4dafb52139b66cb8e72866f37012d1324cbf40f41291a398d",
+                "match": "prompt",
+                "source": "fixture",
+                "status": "ok",
+                "text": "{\"category\":\"billing\",\"sentiment\":\"neg\",\"priority\":\"high\"}"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "billing",
+                "id": "T-001",
+                "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP.",
+                "priority": "high",
+                "sentiment": "neg"
+              }
+            },
+            "T-002": {
+              "input": {
+                "key": "b401f8b0426bb72a8d7389e672176e887696840e14b82de67ec67d2a862f1e5f",
+                "match": "prompt",
+                "source": "fixture",
+                "status": "ok",
+                "text": "{\"category\":\"technical\",\"sentiment\":\"neg\",\"priority\":\"high\"}"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "technical",
+                "id": "T-002",
+                "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502.",
+                "priority": "high",
+                "sentiment": "neg"
+              }
+            },
+            "T-003": {
+              "input": {
+                "key": "2bc9b8211d53ceda59dda1f782a3b9d8a2ff5e9b0311e22b461da57253d36e34",
+                "match": "prompt",
+                "source": "fixture",
+                "status": "ok",
+                "text": "{\"category\":\"account\",\"sentiment\":\"neu\",\"priority\":\"med\"}"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "account",
+                "id": "T-003",
+                "message": "How do I add a second user to my account? I can't find the option in settings.",
+                "priority": "med",
+                "sentiment": "neu"
+              }
+            },
+            "T-004": {
+              "input": {
+                "key": "7205880a2b78b369fd153fa11b0036641bb40a2956ef8ef59b75b6409f2ece99",
+                "match": "prompt",
+                "source": "fixture",
+                "status": "ok",
+                "text": "{\"category\":\"other\",\"sentiment\":\"pos\",\"priority\":\"low\"}"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "other",
+                "id": "T-004",
+                "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team.",
+                "priority": "low",
+                "sentiment": "pos"
+              }
+            },
+            "T-900": {
+              "input": {
+                "status": "no_fixture",
+                "key": "bfde1831ccb02781f4449824aa0aa1949bbbb6cb0c8119abf93f707a2036ff39",
+                "reason": "fixture mode: no recorded answer for this prompt"
+              },
+              "output": {
+                "id": "T-900",
+                "message": "Can I change the invoice currency from USD to EUR for next month?"
+              }
+            }
+          },
+          "data_stage": "gateway-http.merge",
+          "fixtures": {
+            "input": "fixtures/stages/gateway-http/05-merge.input.jsonl",
+            "output": "fixtures/stages/gateway-http/05-merge.output.jsonl"
+          }
+        },
+        {
+          "id": "catch",
+          "title": "Record a failure",
+          "component": "catch: record_failure",
+          "about": "Only runs when an earlier stage failed. It replaces the message with an error record carrying the reason and writes a WARN line. Select ticket T-900 to see it run.",
+          "code": "- label: record_failure\n  catch:\n    - label: failure_record\n      mapping: |\n        root.id = this.id\n        root.error = error()\n        root._gateway_source = \"error\"\n        root._mode = \"http\"\n    - label: log_failure\n      log:\n        level: WARN\n        message: 'gateway failed for ${! json(\"id\") }: ${! json(\"error\") }'",
+          "io": {
+            "T-001": {
+              "input": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "billing",
+                "id": "T-001",
+                "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP.",
+                "priority": "high",
+                "sentiment": "neg"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "billing",
+                "id": "T-001",
+                "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP.",
+                "priority": "high",
+                "sentiment": "neg"
+              }
+            },
+            "T-002": {
+              "input": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "technical",
+                "id": "T-002",
+                "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502.",
+                "priority": "high",
+                "sentiment": "neg"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "technical",
+                "id": "T-002",
+                "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502.",
+                "priority": "high",
+                "sentiment": "neg"
+              }
+            },
+            "T-003": {
+              "input": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "account",
+                "id": "T-003",
+                "message": "How do I add a second user to my account? I can't find the option in settings.",
+                "priority": "med",
+                "sentiment": "neu"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "account",
+                "id": "T-003",
+                "message": "How do I add a second user to my account? I can't find the option in settings.",
+                "priority": "med",
+                "sentiment": "neu"
+              }
+            },
+            "T-004": {
+              "input": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "other",
+                "id": "T-004",
+                "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team.",
+                "priority": "low",
+                "sentiment": "pos"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "other",
+                "id": "T-004",
+                "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team.",
+                "priority": "low",
+                "sentiment": "pos"
+              }
+            },
+            "T-900": {
+              "input": {
+                "id": "T-900",
+                "message": "Can I change the invoice currency from USD to EUR for next month?"
+              },
+              "output": {
+                "_gateway_source": "error",
+                "_mode": "http",
+                "error": "processors failed: http://127.0.0.1:18157/ask: HTTP request returned unexpected response code (404): 404 Not Found, Error: {\"status\": \"no_fixture\", \"key\": \"bfde1831ccb02781f4449824aa0aa1949bbbb6cb0c8119abf93f707a2036ff39\", \"reason\": \"fixture mode: no recorded answer for this prompt\"}",
+                "id": "T-900"
+              }
+            }
+          },
+          "data_stage": "gateway-http.catch",
+          "fixtures": {
+            "input": "fixtures/stages/gateway-http/06-catch.input.jsonl",
+            "output": "fixtures/stages/gateway-http/06-catch.output.jsonl"
+          }
+        },
+        {
+          "id": "log",
+          "title": "Log the result",
+          "component": "log: log_result",
+          "about": "One INFO line per ticket for the Logs view in Expanso Cloud. The message is not changed.",
+          "code": "- label: log_result\n  log:\n    level: INFO\n    message: 'classified ${! json(\"id\") } through the model gateway'",
+          "io": {
+            "T-001": {
+              "input": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "billing",
+                "id": "T-001",
+                "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP.",
+                "priority": "high",
+                "sentiment": "neg"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "billing",
+                "id": "T-001",
+                "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP.",
+                "priority": "high",
+                "sentiment": "neg"
+              }
+            },
+            "T-002": {
+              "input": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "technical",
+                "id": "T-002",
+                "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502.",
+                "priority": "high",
+                "sentiment": "neg"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "technical",
+                "id": "T-002",
+                "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502.",
+                "priority": "high",
+                "sentiment": "neg"
+              }
+            },
+            "T-003": {
+              "input": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "account",
+                "id": "T-003",
+                "message": "How do I add a second user to my account? I can't find the option in settings.",
+                "priority": "med",
+                "sentiment": "neu"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "account",
+                "id": "T-003",
+                "message": "How do I add a second user to my account? I can't find the option in settings.",
+                "priority": "med",
+                "sentiment": "neu"
+              }
+            },
+            "T-004": {
+              "input": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "other",
+                "id": "T-004",
+                "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team.",
+                "priority": "low",
+                "sentiment": "pos"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "other",
+                "id": "T-004",
+                "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team.",
+                "priority": "low",
+                "sentiment": "pos"
+              }
+            },
+            "T-900": {
+              "input": {
+                "_gateway_source": "error",
+                "_mode": "http",
+                "error": "processors failed: http://127.0.0.1:18157/ask: HTTP request returned unexpected response code (404): 404 Not Found, Error: {\"status\": \"no_fixture\", \"key\": \"bfde1831ccb02781f4449824aa0aa1949bbbb6cb0c8119abf93f707a2036ff39\", \"reason\": \"fixture mode: no recorded answer for this prompt\"}",
+                "id": "T-900"
+              },
+              "output": {
+                "_gateway_source": "error",
+                "_mode": "http",
+                "error": "processors failed: http://127.0.0.1:18157/ask: HTTP request returned unexpected response code (404): 404 Not Found, Error: {\"status\": \"no_fixture\", \"key\": \"bfde1831ccb02781f4449824aa0aa1949bbbb6cb0c8119abf93f707a2036ff39\", \"reason\": \"fixture mode: no recorded answer for this prompt\"}",
+                "id": "T-900"
+              }
+            }
+          },
+          "data_stage": "gateway-http.log",
+          "fixtures": {
+            "input": "fixtures/stages/gateway-http/07-log.input.jsonl",
+            "output": "fixtures/stages/gateway-http/07-log.output.jsonl"
+          }
+        },
+        {
+          "id": "output",
+          "title": "Write the record",
+          "component": "output: classified (stdout)",
+          "about": "The classified record leaves as one JSON line on stdout.",
+          "code": "output:\n  label: classified\n  stdout:\n    codec: lines",
+          "io": {
+            "T-001": {
+              "input": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "billing",
+                "id": "T-001",
+                "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP.",
+                "priority": "high",
+                "sentiment": "neg"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "billing",
+                "id": "T-001",
+                "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP.",
+                "priority": "high",
+                "sentiment": "neg"
+              }
+            },
+            "T-002": {
+              "input": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "technical",
+                "id": "T-002",
+                "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502.",
+                "priority": "high",
+                "sentiment": "neg"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "technical",
+                "id": "T-002",
+                "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502.",
+                "priority": "high",
+                "sentiment": "neg"
+              }
+            },
+            "T-003": {
+              "input": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "account",
+                "id": "T-003",
+                "message": "How do I add a second user to my account? I can't find the option in settings.",
+                "priority": "med",
+                "sentiment": "neu"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "account",
+                "id": "T-003",
+                "message": "How do I add a second user to my account? I can't find the option in settings.",
+                "priority": "med",
+                "sentiment": "neu"
+              }
+            },
+            "T-004": {
+              "input": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "other",
+                "id": "T-004",
+                "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team.",
+                "priority": "low",
+                "sentiment": "pos"
+              },
+              "output": {
+                "_gateway_source": "fixture",
+                "_mode": "http",
+                "category": "other",
+                "id": "T-004",
+                "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team.",
+                "priority": "low",
+                "sentiment": "pos"
+              }
+            },
+            "T-900": {
+              "input": {
+                "_gateway_source": "error",
+                "_mode": "http",
+                "error": "processors failed: http://127.0.0.1:18157/ask: HTTP request returned unexpected response code (404): 404 Not Found, Error: {\"status\": \"no_fixture\", \"key\": \"bfde1831ccb02781f4449824aa0aa1949bbbb6cb0c8119abf93f707a2036ff39\", \"reason\": \"fixture mode: no recorded answer for this prompt\"}",
+                "id": "T-900"
+              },
+              "output": {
+                "_gateway_source": "error",
+                "_mode": "http",
+                "error": "processors failed: http://127.0.0.1:18157/ask: HTTP request returned unexpected response code (404): 404 Not Found, Error: {\"status\": \"no_fixture\", \"key\": \"bfde1831ccb02781f4449824aa0aa1949bbbb6cb0c8119abf93f707a2036ff39\", \"reason\": \"fixture mode: no recorded answer for this prompt\"}",
+                "id": "T-900"
+              }
+            }
+          },
+          "data_stage": "gateway-http.output",
+          "fixtures": {
+            "input": "fixtures/stages/gateway-http/08-output.input.jsonl",
+            "output": "fixtures/stages/gateway-http/08-output.output.jsonl"
+          }
+        }
+      ]
+    },
+    {
+      "id": "gateway-subprocess",
+      "title": "A Python client under the subprocess processor",
+      "pipeline": "pipelines/gateway-subprocess.yaml",
+      "yaml": "# Model gateway through one long-lived Python client process.\n---\nname: gateway-subprocess\ndescription: Classify support tickets through the node-local model gateway with a Python client\ntype: pipeline\nselector:\n  match_labels:\n    demo: demo-agents-sdk\nconfig:\n  input:\n    label: tickets\n    file:\n      paths: [data/events.jsonl]\n      codec: lines\n  pipeline:\n    threads: 1\n    processors:\n      - label: classify_client\n        subprocess:\n          name: python3\n          args: [\"scripts/gateway_classify.py\"]\n      - label: log_result\n        log:\n          level: INFO\n          message: 'classified ${! json(\"id\") } through the model gateway'\n  output:\n    label: classified\n    stdout:\n      codec: lines\n",
+      "summary": "One long-lived Python process reads tickets on stdin and writes records on stdout. Use it when request validation or response parsing belongs in code.",
+      "stages": [
+        {
+          "id": "read",
+          "title": "Read the ticket",
+          "component": "input: tickets (file)",
+          "about": "The file input emits one message per line of data/events.jsonl.",
+          "code": "input:\n  label: tickets\n  file:\n    paths: [data/events.jsonl]\n    codec: lines",
+          "io": {
+            "T-001": {
+              "input": {
+                "file": "data/events.jsonl"
+              },
+              "output": {
+                "id": "T-001",
+                "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP."
+              }
+            },
+            "T-002": {
+              "input": {
+                "file": "data/events.jsonl"
+              },
+              "output": {
+                "id": "T-002",
+                "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502."
+              }
+            },
+            "T-003": {
+              "input": {
+                "file": "data/events.jsonl"
+              },
+              "output": {
+                "id": "T-003",
+                "message": "How do I add a second user to my account? I can't find the option in settings."
+              }
+            },
+            "T-004": {
+              "input": {
+                "file": "data/events.jsonl"
+              },
+              "output": {
+                "id": "T-004",
+                "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team."
+              }
+            },
+            "T-900": {
+              "input": {
+                "file": "data/events.jsonl"
+              },
+              "output": {
+                "id": "T-900",
+                "message": "Can I change the invoice currency from USD to EUR for next month?"
+              }
+            }
+          },
+          "data_stage": "gateway-subprocess.read",
+          "fixtures": {
+            "input": "fixtures/stages/gateway-subprocess/01-read.input.jsonl",
+            "output": "fixtures/stages/gateway-subprocess/01-read.output.jsonl"
+          }
+        },
+        {
+          "id": "request",
+          "title": "Build the request",
+          "component": "subprocess: classify_client, build_request",
+          "about": "The client turns the ticket into the request body for the gateway.",
+          "code": "def build_request(message: str, fixture: str) -> dict[str, str]:\n    return {\"prompt\": message, \"system\": SYSTEM, \"fixture\": fixture}",
+          "io": {
+            "T-001": {
+              "input": {
+                "id": "T-001",
+                "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP."
+              },
+              "output": {
+                "prompt": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}",
+                "fixture": "support-T-001"
+              }
+            },
+            "T-002": {
+              "input": {
+                "id": "T-002",
+                "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502."
+              },
+              "output": {
+                "prompt": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}",
+                "fixture": "support-T-002"
+              }
+            },
+            "T-003": {
+              "input": {
+                "id": "T-003",
+                "message": "How do I add a second user to my account? I can't find the option in settings."
+              },
+              "output": {
+                "prompt": "How do I add a second user to my account? I can't find the option in settings.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}",
+                "fixture": "support-T-003"
+              }
+            },
+            "T-004": {
+              "input": {
+                "id": "T-004",
+                "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team."
+              },
+              "output": {
+                "prompt": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}",
+                "fixture": "support-T-004"
+              }
+            },
+            "T-900": {
+              "input": {
+                "id": "T-900",
+                "message": "Can I change the invoice currency from USD to EUR for next month?"
+              },
+              "output": {
+                "prompt": "Can I change the invoice currency from USD to EUR for next month?",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}",
+                "fixture": "support-T-900"
+              }
+            }
+          },
+          "data_stage": "gateway-subprocess.request",
+          "fixtures": {
+            "input": "fixtures/stages/gateway-subprocess/02-request.input.jsonl",
+            "output": "fixtures/stages/gateway-subprocess/02-request.output.jsonl"
+          }
+        },
+        {
+          "id": "reply",
+          "title": "Ask the gateway",
+          "component": "subprocess: classify_client, ask_gateway",
+          "about": "One POST to the node-local gateway. A refusal is raised with the gateway's own reason.",
+          "code": "def ask_gateway(message: str, fixture: str) -> dict:\n    request = urllib.request.Request(\n        GATEWAY_URL,\n        data=json.dumps(build_request(message, fixture)).encode(),\n        headers={\"Content-Type\": \"application/json\"},\n    )\n    try:\n        with urllib.request.urlopen(request, timeout=250) as response:\n            return json.loads(response.read())\n    except urllib.error.HTTPError as error:\n        detail = json.loads(error.read() or b\"{}\")\n        raise RuntimeError(detail.get(\"reason\", f\"gateway returned {error.code}\")) from None",
+          "io": {
+            "T-001": {
+              "input": {
+                "prompt": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}",
+                "fixture": "support-T-001"
+              },
+              "output": {
+                "http_status": 200,
+                "body": {
+                  "key": "01830b0796c70ca4dafb52139b66cb8e72866f37012d1324cbf40f41291a398d",
+                  "match": "prompt",
+                  "source": "fixture",
+                  "status": "ok",
+                  "text": "{\"category\":\"billing\",\"sentiment\":\"neg\",\"priority\":\"high\"}"
+                }
+              }
+            },
+            "T-002": {
+              "input": {
+                "prompt": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}",
+                "fixture": "support-T-002"
+              },
+              "output": {
+                "http_status": 200,
+                "body": {
+                  "key": "b401f8b0426bb72a8d7389e672176e887696840e14b82de67ec67d2a862f1e5f",
+                  "match": "prompt",
+                  "source": "fixture",
+                  "status": "ok",
+                  "text": "{\"category\":\"technical\",\"sentiment\":\"neg\",\"priority\":\"high\"}"
+                }
+              }
+            },
+            "T-003": {
+              "input": {
+                "prompt": "How do I add a second user to my account? I can't find the option in settings.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}",
+                "fixture": "support-T-003"
+              },
+              "output": {
+                "http_status": 200,
+                "body": {
+                  "key": "2bc9b8211d53ceda59dda1f782a3b9d8a2ff5e9b0311e22b461da57253d36e34",
+                  "match": "prompt",
+                  "source": "fixture",
+                  "status": "ok",
+                  "text": "{\"category\":\"account\",\"sentiment\":\"neu\",\"priority\":\"med\"}"
+                }
+              }
+            },
+            "T-004": {
+              "input": {
+                "prompt": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team.",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}",
+                "fixture": "support-T-004"
+              },
+              "output": {
+                "http_status": 200,
+                "body": {
+                  "key": "7205880a2b78b369fd153fa11b0036641bb40a2956ef8ef59b75b6409f2ece99",
+                  "match": "prompt",
+                  "source": "fixture",
+                  "status": "ok",
+                  "text": "{\"category\":\"other\",\"sentiment\":\"pos\",\"priority\":\"low\"}"
+                }
+              }
+            },
+            "T-900": {
+              "input": {
+                "prompt": "Can I change the invoice currency from USD to EUR for next month?",
+                "system": "Classify this support ticket. Respond with strict JSON only, no prose: {\"category\":\"billing|technical|account|other\",\"sentiment\":\"pos|neg|neu\",\"priority\":\"low|med|high\"}",
+                "fixture": "support-T-900"
+              },
+              "output": {
+                "http_status": 404,
+                "body": {
+                  "status": "no_fixture",
+                  "key": "bfde1831ccb02781f4449824aa0aa1949bbbb6cb0c8119abf93f707a2036ff39",
+                  "reason": "fixture mode: no recorded answer for this prompt"
+                }
+              }
+            }
+          },
+          "data_stage": "gateway-subprocess.reply",
+          "fixtures": {
+            "input": "fixtures/stages/gateway-subprocess/03-reply.input.jsonl",
+            "output": "fixtures/stages/gateway-subprocess/03-reply.output.jsonl"
+          }
+        },
+        {
+          "id": "record",
+          "title": "Validate and emit",
+          "component": "subprocess: classify_client",
+          "about": "The client checks each field against its allowed values, then prints one record per ticket. A bad ticket becomes an error record and the process keeps running.",
+          "code": "- label: classify_client\n  subprocess:\n    name: python3\n    args: [\"scripts/gateway_classify.py\"]",
+          "io": {
+            "T-001": {
+              "input": {
+                "key": "01830b0796c70ca4dafb52139b66cb8e72866f37012d1324cbf40f41291a398d",
+                "match": "prompt",
+                "source": "fixture",
+                "status": "ok",
+                "text": "{\"category\":\"billing\",\"sentiment\":\"neg\",\"priority\":\"high\"}"
+              },
+              "output": {
+                "id": "T-001",
+                "category": "billing",
+                "sentiment": "neg",
+                "priority": "high",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              }
+            },
+            "T-002": {
+              "input": {
+                "key": "b401f8b0426bb72a8d7389e672176e887696840e14b82de67ec67d2a862f1e5f",
+                "match": "prompt",
+                "source": "fixture",
+                "status": "ok",
+                "text": "{\"category\":\"technical\",\"sentiment\":\"neg\",\"priority\":\"high\"}"
+              },
+              "output": {
+                "id": "T-002",
+                "category": "technical",
+                "sentiment": "neg",
+                "priority": "high",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              }
+            },
+            "T-003": {
+              "input": {
+                "key": "2bc9b8211d53ceda59dda1f782a3b9d8a2ff5e9b0311e22b461da57253d36e34",
+                "match": "prompt",
+                "source": "fixture",
+                "status": "ok",
+                "text": "{\"category\":\"account\",\"sentiment\":\"neu\",\"priority\":\"med\"}"
+              },
+              "output": {
+                "id": "T-003",
+                "category": "account",
+                "sentiment": "neu",
+                "priority": "med",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              }
+            },
+            "T-004": {
+              "input": {
+                "key": "7205880a2b78b369fd153fa11b0036641bb40a2956ef8ef59b75b6409f2ece99",
+                "match": "prompt",
+                "source": "fixture",
+                "status": "ok",
+                "text": "{\"category\":\"other\",\"sentiment\":\"pos\",\"priority\":\"low\"}"
+              },
+              "output": {
+                "id": "T-004",
+                "category": "other",
+                "sentiment": "pos",
+                "priority": "low",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              }
+            },
+            "T-900": {
+              "input": {
+                "status": "no_fixture",
+                "key": "bfde1831ccb02781f4449824aa0aa1949bbbb6cb0c8119abf93f707a2036ff39",
+                "reason": "fixture mode: no recorded answer for this prompt"
+              },
+              "output": {
+                "id": "T-900",
+                "error": "RuntimeError: fixture mode: no recorded answer for this prompt",
+                "_gateway_source": "error",
+                "_mode": "subprocess"
+              }
+            }
+          },
+          "data_stage": "gateway-subprocess.record",
+          "fixtures": {
+            "input": "fixtures/stages/gateway-subprocess/04-record.input.jsonl",
+            "output": "fixtures/stages/gateway-subprocess/04-record.output.jsonl"
+          }
+        },
+        {
+          "id": "log",
+          "title": "Log the result",
+          "component": "log: log_result",
+          "about": "One INFO line per ticket for the Logs view in Expanso Cloud. The message is not changed.",
+          "code": "- label: log_result\n  log:\n    level: INFO\n    message: 'classified ${! json(\"id\") } through the model gateway'",
+          "io": {
+            "T-001": {
+              "input": {
+                "id": "T-001",
+                "category": "billing",
+                "sentiment": "neg",
+                "priority": "high",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              },
+              "output": {
+                "id": "T-001",
+                "category": "billing",
+                "sentiment": "neg",
+                "priority": "high",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              }
+            },
+            "T-002": {
+              "input": {
+                "id": "T-002",
+                "category": "technical",
+                "sentiment": "neg",
+                "priority": "high",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              },
+              "output": {
+                "id": "T-002",
+                "category": "technical",
+                "sentiment": "neg",
+                "priority": "high",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              }
+            },
+            "T-003": {
+              "input": {
+                "id": "T-003",
+                "category": "account",
+                "sentiment": "neu",
+                "priority": "med",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              },
+              "output": {
+                "id": "T-003",
+                "category": "account",
+                "sentiment": "neu",
+                "priority": "med",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              }
+            },
+            "T-004": {
+              "input": {
+                "id": "T-004",
+                "category": "other",
+                "sentiment": "pos",
+                "priority": "low",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              },
+              "output": {
+                "id": "T-004",
+                "category": "other",
+                "sentiment": "pos",
+                "priority": "low",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              }
+            },
+            "T-900": {
+              "input": {
+                "id": "T-900",
+                "error": "RuntimeError: fixture mode: no recorded answer for this prompt",
+                "_gateway_source": "error",
+                "_mode": "subprocess"
+              },
+              "output": {
+                "id": "T-900",
+                "error": "RuntimeError: fixture mode: no recorded answer for this prompt",
+                "_gateway_source": "error",
+                "_mode": "subprocess"
+              }
+            }
+          },
+          "data_stage": "gateway-subprocess.log",
+          "fixtures": {
+            "input": "fixtures/stages/gateway-subprocess/05-log.input.jsonl",
+            "output": "fixtures/stages/gateway-subprocess/05-log.output.jsonl"
+          }
+        },
+        {
+          "id": "output",
+          "title": "Write the record",
+          "component": "output: classified (stdout)",
+          "about": "The classified record leaves as one JSON line on stdout.",
+          "code": "output:\n  label: classified\n  stdout:\n    codec: lines",
+          "io": {
+            "T-001": {
+              "input": {
+                "id": "T-001",
+                "category": "billing",
+                "sentiment": "neg",
+                "priority": "high",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              },
+              "output": {
+                "id": "T-001",
+                "category": "billing",
+                "sentiment": "neg",
+                "priority": "high",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              }
+            },
+            "T-002": {
+              "input": {
+                "id": "T-002",
+                "category": "technical",
+                "sentiment": "neg",
+                "priority": "high",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              },
+              "output": {
+                "id": "T-002",
+                "category": "technical",
+                "sentiment": "neg",
+                "priority": "high",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              }
+            },
+            "T-003": {
+              "input": {
+                "id": "T-003",
+                "category": "account",
+                "sentiment": "neu",
+                "priority": "med",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              },
+              "output": {
+                "id": "T-003",
+                "category": "account",
+                "sentiment": "neu",
+                "priority": "med",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              }
+            },
+            "T-004": {
+              "input": {
+                "id": "T-004",
+                "category": "other",
+                "sentiment": "pos",
+                "priority": "low",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              },
+              "output": {
+                "id": "T-004",
+                "category": "other",
+                "sentiment": "pos",
+                "priority": "low",
+                "_gateway_source": "fixture",
+                "_mode": "subprocess"
+              }
+            },
+            "T-900": {
+              "input": {
+                "id": "T-900",
+                "error": "RuntimeError: fixture mode: no recorded answer for this prompt",
+                "_gateway_source": "error",
+                "_mode": "subprocess"
+              },
+              "output": {
+                "id": "T-900",
+                "error": "RuntimeError: fixture mode: no recorded answer for this prompt",
+                "_gateway_source": "error",
+                "_mode": "subprocess"
+              }
+            }
+          },
+          "data_stage": "gateway-subprocess.output",
+          "fixtures": {
+            "input": "fixtures/stages/gateway-subprocess/06-output.input.jsonl",
+            "output": "fixtures/stages/gateway-subprocess/06-output.output.jsonl"
+          }
+        }
+      ]
+    }
+  ]
+}

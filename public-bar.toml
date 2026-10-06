@@ -1,0 +1,258 @@
+# Public example bar manifest. Checked by the shared demo-kit public-bar.py.
+version = 1
+
+[repository]
+name = "demo-agents-sdk"
+published = true
+
+[web]
+document = "explorer/index.html"
+explanation_selector = "#explanation"
+explorer_selector = "#explorer"
+run_selector = "#run"
+deploy_selector = "#deploy"
+
+[browser]
+url = "http://127.0.0.1:18160/explorer/"
+ready_url = "http://127.0.0.1:18160/explorer/index.html"
+start_command = ["python3", "-m", "http.server", "18160", "--bind", "127.0.0.1"]
+theme_toggle_selector = "#theme"
+stage_selector = "[data-path-list]:not([hidden]) [data-stage]"
+current_stage_selector = "[data-path-list]:not([hidden]) [data-stage][aria-current='step']"
+scroll_anchor_selector = "#explorer"
+
+[[browser.controls]]
+id = "copy-input"
+kind = "copy"
+selector = "#copy-input"
+feedback_selector = "#copy-input-status"
+success_text = "Copied"
+failure_text = "Copy failed"
+
+[[browser.controls]]
+id = "copy-output"
+kind = "copy"
+selector = "#copy-output"
+feedback_selector = "#copy-output-status"
+success_text = "Copied"
+failure_text = "Copy failed"
+
+[[browser.controls]]
+id = "copy-code"
+kind = "copy"
+selector = "#copy-code"
+feedback_selector = "#copy-code-status"
+success_text = "Copied"
+failure_text = "Copy failed"
+
+[[browser.controls]]
+id = "copy-run-http"
+kind = "copy"
+selector = "#copy-run-http"
+feedback_selector = "#copy-run-http-status"
+success_text = "Copied"
+failure_text = "Copy failed"
+
+[[browser.controls]]
+id = "copy-run-subprocess"
+kind = "copy"
+selector = "#copy-run-subprocess"
+feedback_selector = "#copy-run-subprocess-status"
+success_text = "Copied"
+failure_text = "Copy failed"
+
+[[browser.controls]]
+id = "copy-prove"
+kind = "copy"
+selector = "#copy-prove"
+feedback_selector = "#copy-prove-status"
+success_text = "Copied"
+failure_text = "Copy failed"
+
+[[browser.controls]]
+id = "copy-enroll"
+kind = "copy"
+selector = "#copy-enroll"
+feedback_selector = "#copy-enroll-status"
+success_text = "Copied"
+failure_text = "Copy failed"
+
+[[browser.controls]]
+id = "copy-start"
+kind = "copy"
+selector = "#copy-start"
+feedback_selector = "#copy-start-status"
+success_text = "Copied"
+failure_text = "Copy failed"
+
+[[browser.controls]]
+id = "copy-deploy"
+kind = "copy"
+selector = "#copy-deploy"
+feedback_selector = "#copy-deploy-status"
+success_text = "Copied"
+failure_text = "Copy failed"
+
+[[browser.controls]]
+id = "copy-nodes"
+kind = "copy"
+selector = "#copy-nodes"
+feedback_selector = "#copy-nodes-status"
+success_text = "Copied"
+failure_text = "Copy failed"
+
+[[browser.controls]]
+id = "download-yaml"
+kind = "download"
+selector = "#download-yaml"
+feedback_selector = "#download-yaml-status"
+success_text = "Download started"
+failure_text = "Download failed"
+failure_url_pattern = "**/pipelines/*.yaml"
+
+[[browser.controls]]
+id = "download-fixture"
+kind = "download"
+selector = "#download-fixture"
+feedback_selector = "#download-fixture-status"
+success_text = "Download started"
+failure_text = "Download failed"
+failure_url_pattern = "**/fixtures/stages/**"
+
+[[services]]
+id = "gateway"
+command = ["python3", "gateway/fixture_gateway.py"]
+ready_url = "http://127.0.0.1:18157/status"
+
+[[pipelines]]
+id = "gateway-http"
+path = "pipelines/gateway-http.yaml"
+input = "data/events.jsonl"
+expected = "expected/gateway-http.jsonl"
+timeout_seconds = 60
+
+[[pipelines]]
+id = "gateway-subprocess"
+path = "pipelines/gateway-subprocess.yaml"
+input = "data/events.jsonl"
+expected = "expected/gateway-subprocess.jsonl"
+timeout_seconds = 60
+
+[[stages]]
+id = "gateway-http-read"
+pipeline = "gateway-http"
+selector = "[data-stage='gateway-http.read']"
+input = "fixtures/stages/gateway-http/01-read.input.jsonl"
+output = "fixtures/stages/gateway-http/01-read.output.jsonl"
+
+[[stages]]
+id = "gateway-http-parse"
+pipeline = "gateway-http"
+selector = "[data-stage='gateway-http.parse']"
+input = "fixtures/stages/gateway-http/02-parse.input.jsonl"
+output = "fixtures/stages/gateway-http/02-parse.output.jsonl"
+
+[[stages]]
+id = "gateway-http-request"
+pipeline = "gateway-http"
+selector = "[data-stage='gateway-http.request']"
+input = "fixtures/stages/gateway-http/03-request.input.jsonl"
+output = "fixtures/stages/gateway-http/03-request.output.jsonl"
+
+[[stages]]
+id = "gateway-http-reply"
+pipeline = "gateway-http"
+selector = "[data-stage='gateway-http.reply']"
+input = "fixtures/stages/gateway-http/04-reply.input.jsonl"
+output = "fixtures/stages/gateway-http/04-reply.output.jsonl"
+
+[[stages]]
+id = "gateway-http-merge"
+pipeline = "gateway-http"
+selector = "[data-stage='gateway-http.merge']"
+input = "fixtures/stages/gateway-http/05-merge.input.jsonl"
+output = "fixtures/stages/gateway-http/05-merge.output.jsonl"
+
+[[stages]]
+id = "gateway-http-catch"
+pipeline = "gateway-http"
+selector = "[data-stage='gateway-http.catch']"
+input = "fixtures/stages/gateway-http/06-catch.input.jsonl"
+output = "fixtures/stages/gateway-http/06-catch.output.jsonl"
+
+[[stages]]
+id = "gateway-http-log"
+pipeline = "gateway-http"
+selector = "[data-stage='gateway-http.log']"
+input = "fixtures/stages/gateway-http/07-log.input.jsonl"
+output = "fixtures/stages/gateway-http/07-log.output.jsonl"
+
+[[stages]]
+id = "gateway-http-output"
+pipeline = "gateway-http"
+selector = "[data-stage='gateway-http.output']"
+input = "fixtures/stages/gateway-http/08-output.input.jsonl"
+output = "fixtures/stages/gateway-http/08-output.output.jsonl"
+
+[[stages]]
+id = "gateway-subprocess-read"
+pipeline = "gateway-subprocess"
+selector = "[data-stage='gateway-subprocess.read']"
+input = "fixtures/stages/gateway-subprocess/01-read.input.jsonl"
+output = "fixtures/stages/gateway-subprocess/01-read.output.jsonl"
+
+[[stages]]
+id = "gateway-subprocess-request"
+pipeline = "gateway-subprocess"
+selector = "[data-stage='gateway-subprocess.request']"
+input = "fixtures/stages/gateway-subprocess/02-request.input.jsonl"
+output = "fixtures/stages/gateway-subprocess/02-request.output.jsonl"
+
+[[stages]]
+id = "gateway-subprocess-reply"
+pipeline = "gateway-subprocess"
+selector = "[data-stage='gateway-subprocess.reply']"
+input = "fixtures/stages/gateway-subprocess/03-reply.input.jsonl"
+output = "fixtures/stages/gateway-subprocess/03-reply.output.jsonl"
+
+[[stages]]
+id = "gateway-subprocess-record"
+pipeline = "gateway-subprocess"
+selector = "[data-stage='gateway-subprocess.record']"
+input = "fixtures/stages/gateway-subprocess/04-record.input.jsonl"
+output = "fixtures/stages/gateway-subprocess/04-record.output.jsonl"
+
+[[stages]]
+id = "gateway-subprocess-log"
+pipeline = "gateway-subprocess"
+selector = "[data-stage='gateway-subprocess.log']"
+input = "fixtures/stages/gateway-subprocess/05-log.input.jsonl"
+output = "fixtures/stages/gateway-subprocess/05-log.output.jsonl"
+
+[[stages]]
+id = "gateway-subprocess-output"
+pipeline = "gateway-subprocess"
+selector = "[data-stage='gateway-subprocess.output']"
+input = "fixtures/stages/gateway-subprocess/06-output.input.jsonl"
+output = "fixtures/stages/gateway-subprocess/06-output.output.jsonl"
+
+[[platforms]]
+name = "docker-compose"
+profile = "compose"
+files = ["docker-compose.yaml", "deploy/docker-compose.node.yaml"]
+validators = [
+  ["docker", "compose", "-f", "docker-compose.yaml", "config", "--quiet"],
+  ["docker", "compose", "-f", "deploy/docker-compose.node.yaml", "config", "--quiet"],
+]
+
+[[yaml]]
+path = "config/edge-local.yaml"
+role = "support"
+
+[[yaml]]
+path = "config/edge-node.yaml"
+role = "support"
+
+[regressions]
+features = "public-features.json"
+removal_files = ["public-removals/*.json"]

@@ -1,0 +1,5 @@
+{"_gateway_source": "fixture", "_mode": "http", "category": "billing", "id": "T-001", "message": "I was charged twice for my Pro subscription this month. Please refund the duplicate charge ASAP.", "priority": "high", "sentiment": "neg"}
+{"_gateway_source": "fixture", "_mode": "http", "category": "technical", "id": "T-002", "message": "The dashboard won't load — I just see a spinner. Tried Chrome and Firefox. Browser console shows a 502.", "priority": "high", "sentiment": "neg"}
+{"_gateway_source": "fixture", "_mode": "http", "category": "account", "id": "T-003", "message": "How do I add a second user to my account? I can't find the option in settings.", "priority": "med", "sentiment": "neu"}
+{"_gateway_source": "fixture", "_mode": "http", "category": "other", "id": "T-004", "message": "Just wanted to say the new export feature is great. Saved me hours this week. Thanks team.", "priority": "low", "sentiment": "pos"}
+{"id": "T-900", "message": "Can I change the invoice currency from USD to EUR for next month?"}

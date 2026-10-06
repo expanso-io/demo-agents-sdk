@@ -3,7 +3,7 @@
 # Tests use `uv run` so dev deps install on first invocation.
 # =============================================================================
 
-.PHONY: help test test-fast test-smoke lint format validate compose-config build verify clean
+.PHONY: help test test-fast test-smoke lint format validate compose-config explorer-check prove build verify clean
 
 help:
 	@echo "Targets:"
@@ -14,6 +14,8 @@ help:
 	@echo "  format         ruff format"
 	@echo "  validate       expanso-cli validate every pipeline YAML"
 	@echo "  compose-config validate the one-shot Docker runners"
+	@echo "  explorer-check fail if explorer/index.html is stale"
+	@echo "  prove          run both pipelines, rebuild fixtures, write the dated report"
 	@echo "  build          docker compose build runner image"
 	@echo "  verify         lint + test + validate + compose-config (no Docker build)"
 	@echo "  clean          remove pytest/ruff caches"
@@ -43,10 +45,16 @@ validate:
 compose-config:
 	@docker compose config --quiet && echo "compose config: OK"
 
+explorer-check:
+	uv run -s scripts/build_explorer.py --check
+
+prove:
+	uv run -s scripts/prove.py --check --node
+
 build:
 	docker compose build gateway-subprocess
 
-verify: lint test validate compose-config
+verify: lint test validate compose-config explorer-check
 	@echo "All quality checks passed."
 
 clean:

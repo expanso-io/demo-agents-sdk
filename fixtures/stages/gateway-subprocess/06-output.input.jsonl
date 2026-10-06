@@ -1,0 +1,5 @@
+{"id": "T-001", "category": "billing", "sentiment": "neg", "priority": "high", "_gateway_source": "fixture", "_mode": "subprocess"}
+{"id": "T-002", "category": "technical", "sentiment": "neg", "priority": "high", "_gateway_source": "fixture", "_mode": "subprocess"}
+{"id": "T-003", "category": "account", "sentiment": "neu", "priority": "med", "_gateway_source": "fixture", "_mode": "subprocess"}
+{"id": "T-004", "category": "other", "sentiment": "pos", "priority": "low", "_gateway_source": "fixture", "_mode": "subprocess"}
+{"id": "T-900", "error": "RuntimeError: fixture mode: no recorded answer for this prompt", "_gateway_source": "error", "_mode": "subprocess"}

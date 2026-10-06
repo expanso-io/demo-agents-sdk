@@ -23,7 +23,8 @@ COPY --chown=expanso:expanso config /opt/demo/config
 COPY --chown=expanso:expanso data /opt/demo/data
 COPY --chown=expanso:expanso fixtures /opt/demo/fixtures
 COPY --chown=expanso:expanso pipelines /opt/demo/pipelines
-RUN chmod 0555 /usr/local/bin/run-demo
+RUN chmod 0555 /usr/local/bin/run-demo \
+ && mkdir -p /var/lib/expanso && chown expanso:expanso /var/lib/expanso
 
 # Pipelines use paths relative to the node's working directory.
 WORKDIR /opt/demo

@@ -1,0 +1,5 @@
+{"http_status": 200, "body": {"key": "01830b0796c70ca4dafb52139b66cb8e72866f37012d1324cbf40f41291a398d", "match": "prompt", "source": "fixture", "status": "ok", "text": "{\"category\":\"billing\",\"sentiment\":\"neg\",\"priority\":\"high\"}"}}
+{"http_status": 200, "body": {"key": "b401f8b0426bb72a8d7389e672176e887696840e14b82de67ec67d2a862f1e5f", "match": "prompt", "source": "fixture", "status": "ok", "text": "{\"category\":\"technical\",\"sentiment\":\"neg\",\"priority\":\"high\"}"}}
+{"http_status": 200, "body": {"key": "2bc9b8211d53ceda59dda1f782a3b9d8a2ff5e9b0311e22b461da57253d36e34", "match": "prompt", "source": "fixture", "status": "ok", "text": "{\"category\":\"account\",\"sentiment\":\"neu\",\"priority\":\"med\"}"}}
+{"http_status": 200, "body": {"key": "7205880a2b78b369fd153fa11b0036641bb40a2956ef8ef59b75b6409f2ece99", "match": "prompt", "source": "fixture", "status": "ok", "text": "{\"category\":\"other\",\"sentiment\":\"pos\",\"priority\":\"low\"}"}}
+{"http_status": 404, "body": {"status": "no_fixture", "key": "bfde1831ccb02781f4449824aa0aa1949bbbb6cb0c8119abf93f707a2036ff39", "reason": "fixture mode: no recorded answer for this prompt"}}

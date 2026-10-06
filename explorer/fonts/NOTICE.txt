@@ -1,0 +1,10 @@
+Newsreader, Hanken Grotesk and JetBrains Mono are bundled here so the page
+renders the same offline. Each is licensed under the SIL Open Font License,
+Version 1.1 (https://openfontlicense.org).
+
+Copyright 2020 The Newsreader Project Authors
+  (https://github.com/productiontype/Newsreader)
+Copyright 2021 The Hanken Grotesk Project Authors
+  (https://github.com/marcologous/hanken-grotesk)
+Copyright 2020 The JetBrains Mono Project Authors
+  (https://github.com/JetBrains/JetBrainsMono)

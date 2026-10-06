@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "removals": [],
+  "pending_captain_decisions": [
+    {
+      "id": "provider-comparison-http-paths",
+      "commit": "46abdb5",
+      "removed": [
+        "pipelines/openai-http.yaml",
+        "pipelines/anthropic-http.yaml",
+        "pipelines/gemini-http.yaml"
+      ],
+      "why_not_restored": "Each calls a model provider directly. The demo-kit provider check and the gateway rule forbid that, and directory rules forbid vendor names in public material."
+    },
+    {
+      "id": "provider-comparison-sdk-paths",
+      "commit": "46abdb5",
+      "removed": [
+        "pipelines/openai-sdk.yaml",
+        "pipelines/anthropic-sdk.yaml",
+        "pipelines/gemini-sdk.yaml",
+        "scripts/openai_classify.py",
+        "scripts/anthropic_classify.py",
+        "scripts/gemini_classify.py",
+        "tests/test_openai_classify.py",
+        "tests/test_anthropic_classify.py",
+        "tests/test_gemini_classify.py",
+        "uv.lock"
+      ],
+      "why_not_restored": "Provider SDK clients under the subprocess processor. The gateway client replaces the subprocess pattern; the provider dimension needs a decision."
+    },
+    {
+      "id": "tickets-t005-to-t008",
+      "commit": "46abdb5",
+      "removed": [
+        "data/events.jsonl lines T-005, T-006, T-007, T-008"
+      ],
+      "why_not_restored": "Restoring needs four more recorded answers, which means model calls, and the gateway caps a run at four calls."
+    }
+  ],
+  "note": "These are not approvals. An approval needs approved_by captain and a date in the removals array."
+}

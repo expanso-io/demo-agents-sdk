@@ -6,9 +6,11 @@
 > [`../demo-guidance/README.md`](../demo-guidance/README.md) before acting.
 > `_demo-kit` runs before you record; `demo-guidance` runs after.
 
-- Every classification asks `../_demo-kit/model-gateway.py`; fixture replay is
-  the default. Start with the Models section in `../_demo-kit/README.md` and
-  run `just check` before committing.
+- Every classification asks the model gateway on `127.0.0.1:18157`:
+  `../_demo-kit/model-gateway.py` when recording on the host,
+  `gateway/fixture_gateway.py` (replay only) in the runners and on nodes.
+  Fixture replay is the default. Start with the Models section in
+  `../_demo-kit/README.md` and run `just check` before committing.
 
 ## Maintaining this file
 

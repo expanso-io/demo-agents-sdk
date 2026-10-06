@@ -1,0 +1,213 @@
+{
+  "version": 1,
+  "features": [
+    {
+      "id": "gateway-http-pipeline",
+      "description": "HTTP pipeline classifies the shipped tickets through the gateway"
+    },
+    {
+      "id": "gateway-subprocess-pipeline",
+      "description": "Subprocess pipeline classifies the shipped tickets with a Python client"
+    },
+    {
+      "id": "shipped-tickets",
+      "description": "Four shipped support tickets, T-001 to T-004"
+    },
+    {
+      "id": "replay-gateway",
+      "description": "Replay-only gateway on 127.0.0.1:18157 with the demo-kit wire contract, no live mode"
+    },
+    {
+      "id": "recorded-answers",
+      "description": "Committed recorded answers replayed instead of calling a model"
+    },
+    {
+      "id": "bounded-clean-run",
+      "description": "Runner exits 0 by itself after four records with no warning lines"
+    },
+    {
+      "id": "failure-record",
+      "description": "A ticket with no recorded answer becomes an error record in both pipelines"
+    },
+    {
+      "id": "cloud-node-stack",
+      "description": "Cloud node with the gateway colocated: deploy/docker-compose.node.yaml"
+    },
+    {
+      "id": "dated-run-report",
+      "description": "Dated Markdown run report written by scripts/prove.py"
+    },
+    {
+      "id": "gateway-controls",
+      "description": "just gateway-up, gateway-status and gateway-down for recording replacement answers"
+    },
+    {
+      "id": "http-vs-subprocess-comparison",
+      "description": "Comparison of building the request in YAML or in a Python client"
+    },
+    {
+      "id": "gateway-http-read",
+      "description": "Explorer stage: Read the ticket (HTTP in the pipeline)"
+    },
+    {
+      "id": "gateway-http-parse",
+      "description": "Explorer stage: Parse the line (HTTP in the pipeline)"
+    },
+    {
+      "id": "gateway-http-request",
+      "description": "Explorer stage: Build the request (HTTP in the pipeline)"
+    },
+    {
+      "id": "gateway-http-reply",
+      "description": "Explorer stage: Ask the gateway (HTTP in the pipeline)"
+    },
+    {
+      "id": "gateway-http-merge",
+      "description": "Explorer stage: Merge the answer (HTTP in the pipeline)"
+    },
+    {
+      "id": "gateway-http-catch",
+      "description": "Explorer stage: Record a failure (HTTP in the pipeline)"
+    },
+    {
+      "id": "gateway-http-log",
+      "description": "Explorer stage: Log the result (HTTP in the pipeline)"
+    },
+    {
+      "id": "gateway-http-output",
+      "description": "Explorer stage: Write the record (HTTP in the pipeline)"
+    },
+    {
+      "id": "gateway-subprocess-read",
+      "description": "Explorer stage: Read the ticket (A Python client under the subprocess processor)"
+    },
+    {
+      "id": "gateway-subprocess-request",
+      "description": "Explorer stage: Build the request (A Python client under the subprocess processor)"
+    },
+    {
+      "id": "gateway-subprocess-reply",
+      "description": "Explorer stage: Ask the gateway (A Python client under the subprocess processor)"
+    },
+    {
+      "id": "gateway-subprocess-record",
+      "description": "Explorer stage: Validate and emit (A Python client under the subprocess processor)"
+    },
+    {
+      "id": "gateway-subprocess-log",
+      "description": "Explorer stage: Log the result (A Python client under the subprocess processor)"
+    },
+    {
+      "id": "gateway-subprocess-output",
+      "description": "Explorer stage: Write the record (A Python client under the subprocess processor)"
+    }
+  ],
+  "routes": [
+    {
+      "id": "explorer",
+      "path": "/explorer/"
+    }
+  ],
+  "controls": [
+    {
+      "id": "copy-input",
+      "selector": "#copy-input"
+    },
+    {
+      "id": "copy-output",
+      "selector": "#copy-output"
+    },
+    {
+      "id": "copy-code",
+      "selector": "#copy-code"
+    },
+    {
+      "id": "copy-run-http",
+      "selector": "#copy-run-http"
+    },
+    {
+      "id": "copy-run-subprocess",
+      "selector": "#copy-run-subprocess"
+    },
+    {
+      "id": "copy-prove",
+      "selector": "#copy-prove"
+    },
+    {
+      "id": "copy-enroll",
+      "selector": "#copy-enroll"
+    },
+    {
+      "id": "copy-start",
+      "selector": "#copy-start"
+    },
+    {
+      "id": "copy-deploy",
+      "selector": "#copy-deploy"
+    },
+    {
+      "id": "copy-nodes",
+      "selector": "#copy-nodes"
+    },
+    {
+      "id": "theme-toggle",
+      "selector": "#theme"
+    },
+    {
+      "id": "path-switch",
+      "selector": "#path-buttons button"
+    },
+    {
+      "id": "ticket-switch",
+      "selector": "#ticket-buttons button"
+    },
+    {
+      "id": "stage-previous",
+      "selector": "#prev"
+    },
+    {
+      "id": "stage-next",
+      "selector": "#next"
+    }
+  ],
+  "downloads": [
+    {
+      "id": "download-yaml",
+      "selector": "#download-yaml"
+    },
+    {
+      "id": "download-fixture",
+      "selector": "#download-fixture"
+    }
+  ],
+  "browser_assertions": [
+    {
+      "id": "page-stages",
+      "description": "Left and right arrow keys page the stages"
+    },
+    {
+      "id": "scroll-kept",
+      "description": "Paging keeps the scroll position"
+    },
+    {
+      "id": "copy-feedback",
+      "description": "Every copy shows success or failure beside the button"
+    },
+    {
+      "id": "download-feedback",
+      "description": "Every download shows success or failure beside the button"
+    },
+    {
+      "id": "theme-light-default",
+      "description": "Light is the default with an explicit dark toggle"
+    },
+    {
+      "id": "no-horizontal-scroll",
+      "description": "No horizontal scroll at 320, 400, 768 and 1440 px in both themes"
+    },
+    {
+      "id": "contrast-aa",
+      "description": "All text and links meet WCAG AA in both themes"
+    }
+  ]
+}

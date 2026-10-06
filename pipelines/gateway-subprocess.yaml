@@ -13,6 +13,7 @@ config:
       paths: [data/events.jsonl]
       codec: lines
   pipeline:
+    threads: 1
     processors:
       - label: classify_client
         subprocess:

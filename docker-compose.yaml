@@ -3,7 +3,7 @@
 # `docker compose run --rm gateway-http` works from a bare clone.
 x-runner: &runner
   build: .
-  image: demo-agents-sdk-runner
+  user: "1000:1000"
   read_only: true
   cap_drop: [ALL]
   security_opt: ["no-new-privileges:true"]

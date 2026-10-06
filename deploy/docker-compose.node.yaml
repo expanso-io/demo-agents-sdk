@@ -1,0 +1,63 @@
+# A Cloud-managed Expanso Edge node with the model gateway colocated.
+#
+# The pipelines call http://127.0.0.1:18157/ask, so the gateway and Edge share
+# one network namespace: the gateway listens on loopback and nothing is
+# published to the host. Edge identity and its message buffer persist in the
+# edge-data volume. Both containers run unprivileged on a read-only root.
+#
+#   docker compose -f deploy/docker-compose.node.yaml --profile enroll \
+#     run --rm enroll          # once: exchange the bootstrap token
+#   docker compose -f deploy/docker-compose.node.yaml up -d
+name: agents-sdk-node
+
+x-hardened: &hardened
+  build: ..
+  user: "1000:1000"
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  restart: unless-stopped
+  tmpfs:
+    - /tmp:uid=1000,gid=1000,mode=0700
+  environment:
+    HOME: /tmp
+
+services:
+  gateway:
+    <<: *hardened
+    entrypoint: ["python3", "gateway/fixture_gateway.py"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:18157/status"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+
+  edge:
+    <<: *hardened
+    network_mode: "service:gateway"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    entrypoint: ["expanso-edge"]
+    command:
+      - run
+      - --config=/opt/demo/config/edge-node.yaml
+      - --data-dir=/var/lib/expanso
+      - --no-watch
+    volumes:
+      - edge-data:/var/lib/expanso
+
+  enroll:
+    <<: *hardened
+    profiles: ["enroll"]
+    restart: "no"
+    entrypoint: ["expanso-edge"]
+    command: ["bootstrap", "--data-dir=/var/lib/expanso"]
+    env_file:
+      - path: ../.env
+        required: true
+    volumes:
+      - edge-data:/var/lib/expanso
+
+volumes:
+  edge-data:
