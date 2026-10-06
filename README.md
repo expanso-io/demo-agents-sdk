@@ -22,13 +22,17 @@ answer is refused, and both pipelines turn that into an error record.
 You need Docker. No credential, model key or sibling checkout is needed.
 
 ```bash
-docker compose run --rm gateway-http
-docker compose run --rm gateway-subprocess
+just up
+just down
 ```
 
-Each container starts the replay gateway and Expanso Edge, deploys one
-pipeline, prints four records and exits 0 on its own. It runs as an
-unprivileged user on a read-only root with every capability dropped.
+`just up` runs both pipelines, `gateway-http` then `gateway-subprocess`, each
+in a one-shot container that starts the replay gateway and Expanso Edge,
+deploys one pipeline, prints four records and exits 0 on its own. Each runs
+as an unprivileged user on a read-only root with every capability dropped.
+It then serves the explorer at http://127.0.0.1:18160/explorer/. `just down`
+stops the explorer and the gateway, removes the runner containers, and fails
+unless ports 18157 and 18160 are free.
 
 ```json
 {
