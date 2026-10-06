@@ -142,18 +142,19 @@ make test-smoke     # both pipelines in Docker against expected/
 `.github/workflows/ci.yml` runs the same gates, the proof run, and the shared
 public-bar check.
 
-## Features removed earlier, waiting for a decision
+## Features removed earlier
 
 Commit `46abdb5` moved every model request behind the gateway and removed the
-original provider comparison. Restoring it would call providers directly,
-which the demo-kit provider check and the gateway rule forbid, so these wait
-for a captain decision. They are recorded in
-[`public-removals/pending-captain.json`](public-removals/pending-captain.json).
+original provider comparison. This follows the captain's decision of
+2026-10-04 that demos use no metered API keys and present on recorded answers.
+The removals are recorded as approved in
+[`public-removals/2026-10-04-gateway-only.json`](public-removals/2026-10-04-gateway-only.json):
 
 - The three provider-specific HTTP pipelines.
 - The three provider SDK pipelines, their client scripts, tests and `uv.lock`.
-- Tickets T-005 to T-008. Restoring them needs four more recorded answers,
-  which means model calls, and the gateway caps a run at four.
+- Tickets T-005 to T-008, which only fed those runs. Restoring them needs
+  four more recorded answers, which means model calls, and the gateway caps
+  a run at four.
 
 ## License
 

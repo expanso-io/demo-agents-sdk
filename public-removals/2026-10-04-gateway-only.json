@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "removals": [
+    {
+      "id": "provider-comparison-http-paths",
+      "approved_by": "captain",
+      "approved_on": "2026-10-04",
+      "reason": "Captain decision of 2026-10-04: demos use no metered API keys and present on recorded answers through the model gateway. The three provider-specific HTTP pipelines called providers directly.",
+      "commit": "46abdb5",
+      "removed": [
+        "pipelines/openai-http.yaml",
+        "pipelines/anthropic-http.yaml",
+        "pipelines/gemini-http.yaml"
+      ]
+    },
+    {
+      "id": "provider-comparison-sdk-paths",
+      "approved_by": "captain",
+      "approved_on": "2026-10-04",
+      "reason": "Captain decision of 2026-10-04: demos use no metered API keys and present on recorded answers through the model gateway. The provider SDK pipelines, client scripts, tests and lockfile are replaced by the gateway client under the subprocess processor.",
+      "commit": "46abdb5",
+      "removed": [
+        "pipelines/openai-sdk.yaml",
+        "pipelines/anthropic-sdk.yaml",
+        "pipelines/gemini-sdk.yaml",
+        "scripts/openai_classify.py",
+        "scripts/anthropic_classify.py",
+        "scripts/gemini_classify.py",
+        "tests/test_openai_classify.py",
+        "tests/test_anthropic_classify.py",
+        "tests/test_gemini_classify.py",
+        "uv.lock"
+      ]
+    },
+    {
+      "id": "tickets-t005-to-t008",
+      "approved_by": "captain",
+      "approved_on": "2026-10-04",
+      "reason": "Captain decision of 2026-10-04: demos use no metered API keys and present on recorded answers through the model gateway. Tickets T-005 to T-008 were extra sample data for the provider runs. Restoring them needs four more recorded answers, which means model calls, and the gateway caps a run at four.",
+      "commit": "46abdb5",
+      "removed": [
+        "data/events.jsonl lines T-005, T-006, T-007, T-008"
+      ]
+    }
+  ]
+}
