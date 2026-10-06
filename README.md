@@ -19,17 +19,18 @@ answer is refused, and both pipelines turn that into an error record.
 
 ## Run it
 
-You need Docker. No credential, model key or sibling checkout is needed.
+You need Docker, an enrolled node, and an authenticated Expanso CLI. No model
+key is needed because the colocated gateway replays committed answers.
 
 ```bash
 just up
 just down
 ```
 
-`just up` runs both pipelines, `gateway-http` then `gateway-subprocess`, each
-in a one-shot container that starts the replay gateway and Expanso Edge,
-deploys one pipeline, prints four records and exits 0 on its own. Each runs
-as an unprivileged user on a read-only root with every capability dropped.
+`just up` starts the Cloud-connected node, deploys or updates both pipelines,
+and serves the explorer. `just up-offline` runs the two one-shot fixture
+containers without a Cloud account. Each runs as an unprivileged user on a
+read-only root with every capability dropped.
 It then serves the explorer at http://127.0.0.1:18160/explorer/. `just down`
 stops the explorer and the gateway, removes the runner containers, and fails
 unless ports 18157 and 18160 are free.

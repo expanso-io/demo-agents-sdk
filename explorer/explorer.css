@@ -200,6 +200,8 @@ a:hover {
 .btn[disabled] {
   cursor: default;
   color: var(--text-dim);
+  opacity: 1;
+  -webkit-text-fill-color: var(--text-dim);
 }
 
 .controls {

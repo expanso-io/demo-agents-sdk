@@ -2,10 +2,10 @@
 # gateway and the demo files. The same image runs the local one-shot proof
 # (docker-compose.yaml) and the Cloud-enrolled node (deploy/).
 #
-# Edge and the CLI are pinned to one release; the base is pinned by digest.
+# Edge and the CLI are installed from their latest releases.
 # It runs as the base image's unprivileged `expanso` user (uid 1000).
 
-FROM ghcr.io/expanso-io/expanso-edge:v2.1.22@sha256:0a119d5cd7cc5c889d0d57a468e16ffb892134a5a4e4b2e5d529e4c0ad1a3ecb
+FROM ghcr.io/expanso-io/expanso-edge:latest
 
 USER root
 
@@ -13,7 +13,7 @@ USER root
 # readiness probe. Both need only the standard library.
 RUN apk add --no-cache python3 curl ca-certificates bash \
  && curl -fsSL https://get.expanso.io/cli/install.sh \
-    | EXPANSO_INSTALL_DIR=/usr/local/bin EXPANSO_VERSION=v2.1.22 bash \
+    | EXPANSO_INSTALL_DIR=/usr/local/bin bash \
  && expanso-cli version
 
 COPY --chown=expanso:expanso run-demo.sh /usr/local/bin/run-demo
