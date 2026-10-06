@@ -16,6 +16,8 @@ deploy_selector = "#deploy"
 url = "http://127.0.0.1:18160/explorer/"
 ready_url = "http://127.0.0.1:18160/explorer/index.html"
 start_command = ["python3", "-m", "http.server", "18160", "--bind", "127.0.0.1"]
+stop_command = ["python3", "scripts/stop_local.py", "18160"]
+json_selectors = ["#stage-input", "#stage-output"]
 theme_toggle_selector = "#theme"
 stage_selector = "[data-path-list]:not([hidden]) [data-stage]"
 current_stage_selector = "[data-path-list]:not([hidden]) [data-stage][aria-current='step']"
@@ -123,6 +125,7 @@ failure_url_pattern = "**/fixtures/stages/**"
 id = "gateway"
 command = ["python3", "gateway/fixture_gateway.py"]
 ready_url = "http://127.0.0.1:18157/status"
+stop_command = ["python3", "scripts/stop_local.py", "18157"]
 
 [[pipelines]]
 id = "gateway-http"
@@ -239,6 +242,9 @@ output = "fixtures/stages/gateway-subprocess/06-output.output.jsonl"
 [[platforms]]
 name = "docker-compose"
 profile = "compose"
+tls = true
+auth = true
+persistent = true
 files = ["docker-compose.yaml", "deploy/docker-compose.node.yaml"]
 validators = [
   ["docker", "compose", "-f", "docker-compose.yaml", "config", "--quiet"],

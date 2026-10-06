@@ -137,7 +137,7 @@
       <p>The node runs two unprivileged containers on a read-only root that share one network namespace. The replay gateway listens on loopback inside it and publishes no port, so the address the pipelines call, <code>127.0.0.1:18157</code>, is the colocated gateway. The Edge identity and its message buffer persist in a named volume.</p>
       <ol class="steps">
         <li>
-          Copy <code>.env.example</code> to <code>.env</code> and set <code>EXPANSO_EDGE_BOOTSTRAP_TOKEN</code> to the token from Expanso Cloud. The file is git-ignored.
+          Save the bootstrap token from Expanso Cloud in <code>.expanso-bootstrap-token</code>. The file is git-ignored, and Compose hands it to the enroll container as a secret, never as a command-line flag. On Linux, make uid 1000 its owner.
         </li>
         <li>
           Enroll the node once.

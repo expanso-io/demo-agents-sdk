@@ -53,8 +53,11 @@ gateway listens on loopback inside it and publishes no port, so the address
 the pipelines call, `127.0.0.1:18157`, is the colocated gateway. The Edge
 identity and message buffer persist in the `edge-data` volume.
 
-1. Copy `.env.example` to `.env` and set `EXPANSO_EDGE_BOOTSTRAP_TOKEN` to
-   the token from Expanso Cloud. The file is git-ignored.
+1. Save the bootstrap token from Expanso Cloud in `.expanso-bootstrap-token`
+   next to this README. The file is git-ignored, and Compose hands it to the
+   enroll container as a secret, never as a command-line flag. On Linux, make
+   uid 1000 the owner: `sudo install -o 1000 -m 0400 /dev/stdin
+   .expanso-bootstrap-token`, then paste the token and press Ctrl-D.
 2. Enroll the node once:
 
    ```bash

@@ -7,6 +7,7 @@
 #
 #   docker compose -f deploy/docker-compose.node.yaml --profile enroll \
 #     run --rm enroll          # once: exchange the bootstrap token
+#                              # (reads .expanso-bootstrap-token)
 #   docker compose -f deploy/docker-compose.node.yaml up -d
 name: agents-sdk-node
 
@@ -51,13 +52,20 @@ services:
     <<: *hardened
     profiles: ["enroll"]
     restart: "no"
-    entrypoint: ["expanso-edge"]
-    command: ["bootstrap", "--data-dir=/var/lib/expanso"]
-    env_file:
-      - path: ../.env
-        required: true
+    secrets:
+      - bootstrap_token
+    # The token reaches Edge as an environment variable of this one process,
+    # read from the secret file; it is never a command-line flag.
+    entrypoint:
+      - sh
+      - -c
+      - 'EXPANSO_EDGE_BOOTSTRAP_TOKEN="$$(cat /run/secrets/bootstrap_token)" exec expanso-edge bootstrap --data-dir=/var/lib/expanso'
     volumes:
       - edge-data:/var/lib/expanso
+
+secrets:
+  bootstrap_token:
+    file: ../.expanso-bootstrap-token
 
 volumes:
   edge-data:

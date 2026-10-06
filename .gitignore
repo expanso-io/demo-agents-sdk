@@ -22,3 +22,9 @@ dist/
 build/
 *.log
 .runtime/
+
+# Expanso Cloud bootstrap token for the node stack
+.expanso-bootstrap-token
+
+# public-bar reports
+artifacts/
