@@ -1,20 +1,28 @@
 # Model gateway through one long-lived Python client process.
 ---
 name: gateway-subprocess
+description: Classify support tickets through the node-local model gateway with a Python client
 type: pipeline
+selector:
+  match_labels:
+    demo: demo-agents-sdk
 config:
   input:
+    label: tickets
     file:
       paths: [data/events.jsonl]
       codec: lines
   pipeline:
     processors:
-      - subprocess:
-          name: uv
-          args: ["run", "-s", "scripts/gateway_classify.py"]
-      - log:
+      - label: classify_client
+        subprocess:
+          name: python3
+          args: ["scripts/gateway_classify.py"]
+      - label: log_result
+        log:
           level: INFO
           message: 'classified ${! json("id") } through the model gateway'
   output:
+    label: classified
     stdout:
       codec: lines

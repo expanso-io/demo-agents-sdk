@@ -15,6 +15,11 @@ def _load(path: Path) -> dict:
     return yaml.safe_load(path.read_text())
 
 
+def _seconds(value: str) -> int:
+    assert value.endswith("s")
+    return int(value[:-1])
+
+
 def test_only_gateway_pipelines_exist():
     assert {path.stem for path in ALL_PIPELINES} == {
         "gateway-http",
@@ -37,7 +42,8 @@ def test_http_pipeline_targets_only_local_gateway():
     branch = next(processor["branch"] for processor in processors if "branch" in processor)
     http = next(processor["http"] for processor in branch["processors"] if "http" in processor)
     assert http["url"] == "http://127.0.0.1:18157/ask"
-    assert http["retries"] == 0
+    assert http["retries"] >= 1
+    assert http["retries"] * _seconds(http["retry_period"]) >= 5
     assert set(http["headers"]) == {"Content-Type"}
     assert "root.category = $parsed.category" in branch["result_map"]
 
@@ -48,6 +54,6 @@ def test_subprocess_pipeline_uses_gateway_client():
     ]
     subprocess = processors[0]["subprocess"]
     assert subprocess == {
-        "name": "uv",
-        "args": ["run", "-s", "scripts/gateway_classify.py"],
+        "name": "python3",
+        "args": ["scripts/gateway_classify.py"],
     }

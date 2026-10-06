@@ -22,10 +22,10 @@ jobs:
         run: uv python install 3.12
 
       - name: Lint (ruff check)
-        run: uv run --group dev ruff check scripts/ tests/
+        run: uv run --group dev ruff check gateway/ scripts/ tests/
 
       - name: Format check (ruff format --check)
-        run: uv run --group dev ruff format --check scripts/ tests/
+        run: uv run --group dev ruff format --check gateway/ scripts/ tests/
 
       - name: Unit + structure tests
         run: uv run --group dev pytest -m "not smoke"

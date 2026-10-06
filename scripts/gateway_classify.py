@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import sys
 import urllib.error
 import urllib.request
@@ -27,19 +28,26 @@ VALID = {
 }
 
 
-def classify(message: str, fixture: str) -> tuple[dict[str, str], str]:
-    body = json.dumps({"prompt": message, "system": SYSTEM, "fixture": fixture}).encode()
+def build_request(message: str, fixture: str) -> dict[str, str]:
+    return {"prompt": message, "system": SYSTEM, "fixture": fixture}
+
+
+def ask_gateway(message: str, fixture: str) -> dict:
     request = urllib.request.Request(
         GATEWAY_URL,
-        data=body,
+        data=json.dumps(build_request(message, fixture)).encode(),
         headers={"Content-Type": "application/json"},
     )
     try:
         with urllib.request.urlopen(request, timeout=250) as response:
-            gateway = json.loads(response.read())
+            return json.loads(response.read())
     except urllib.error.HTTPError as error:
         detail = json.loads(error.read() or b"{}")
         raise RuntimeError(detail.get("reason", f"gateway returned {error.code}")) from None
+
+
+def classify(message: str, fixture: str) -> tuple[dict[str, str], str]:
+    gateway = ask_gateway(message, fixture)
     parsed = json.loads(gateway["text"])
     for field, allowed in VALID.items():
         if parsed.get(field) not in allowed:
@@ -48,6 +56,7 @@ def classify(message: str, fixture: str) -> tuple[dict[str, str], str]:
 
 
 def main() -> None:
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
     for raw_line in sys.stdin:
         if not (line := raw_line.strip()):
             continue
@@ -72,7 +81,11 @@ def main() -> None:
                 "_gateway_source": "error",
                 "_mode": "subprocess",
             }
-        print(json.dumps(out), flush=True)
+        try:
+            print(json.dumps(out), flush=True)
+        except BrokenPipeError:
+            # Edge closed our stdout while stopping: nothing is left to deliver.
+            return
 
 
 if __name__ == "__main__":

@@ -1,0 +1,5 @@
+name: agents-sdk-node
+labels:
+  demo: demo-agents-sdk
+telemetry:
+  do_not_track: false

@@ -1,0 +1,4 @@
+{"_gateway_source": "fixture", "_mode": "subprocess", "category": "billing", "id": "T-001", "priority": "high", "sentiment": "neg"}
+{"_gateway_source": "fixture", "_mode": "subprocess", "category": "technical", "id": "T-002", "priority": "high", "sentiment": "neg"}
+{"_gateway_source": "fixture", "_mode": "subprocess", "category": "account", "id": "T-003", "priority": "med", "sentiment": "neu"}
+{"_gateway_source": "fixture", "_mode": "subprocess", "category": "other", "id": "T-004", "priority": "low", "sentiment": "pos"}

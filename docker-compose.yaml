@@ -1,29 +1,23 @@
-# One-shot fixture-mode runners. The demo-kit is mounted read-only so the
-# entrypoint can start the shared gateway inside the same container as Edge.
+# One-shot runners. Each starts the replay gateway and Expanso Edge in one
+# container, deploys one pipeline, and exits once its four records appear.
+# `docker compose run --rm gateway-http` works from a bare clone.
 x-runner: &runner
   build: .
   image: demo-agents-sdk-runner
-  working_dir: /workspace
-  volumes:
-    - ./pipelines:/pipelines:ro
-    - ./data:/data:ro
-    - ./scripts:/scripts:ro
-    - ./:/workspace:ro
-    - ../_demo-kit:/demo-kit:ro
-    - gateway-state:/workspace/.runtime
-    - uv-cache:/root/.cache/uv
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  tmpfs:
+    - /tmp:uid=1000,gid=1000,mode=0700
   environment:
-    - MODEL_GATEWAY_CONFIG=/workspace/model-gateway.toml
+    EXPECT_RECORDS: "4"
+    HOME: /tmp
 
 services:
   gateway-http:
     <<: *runner
-    command: ["/pipelines/gateway-http.yaml"]
+    command: ["pipelines/gateway-http.yaml"]
 
   gateway-subprocess:
     <<: *runner
-    command: ["/pipelines/gateway-subprocess.yaml"]
-
-volumes:
-  gateway-state:
-  uv-cache:
+    command: ["pipelines/gateway-subprocess.yaml"]

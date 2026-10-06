@@ -13,7 +13,7 @@ help:
 	@echo "  lint           ruff check"
 	@echo "  format         ruff format"
 	@echo "  validate       expanso-cli validate every pipeline YAML"
-	@echo "  compose-config validate the fixture-mode Docker runners"
+	@echo "  compose-config validate the one-shot Docker runners"
 	@echo "  build          docker compose build runner image"
 	@echo "  verify         lint + test + validate + compose-config (no Docker build)"
 	@echo "  clean          remove pytest/ruff caches"
@@ -28,10 +28,10 @@ test-all:
 	uv run --group dev pytest
 
 lint:
-	uv run --group dev ruff check scripts/ tests/
+	uv run --group dev ruff check gateway/ scripts/ tests/
 
 format:
-	uv run --group dev ruff format scripts/ tests/
+	uv run --group dev ruff format gateway/ scripts/ tests/
 
 validate:
 	@for f in pipelines/*.yaml; do \

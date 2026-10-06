@@ -1,47 +1,31 @@
-# Runner image: Expanso Edge + Expanso CLI + uv + Python.
+# Runner and node image: Expanso Edge, Expanso CLI, Python 3, the replay
+# gateway and the demo files. The same image runs the local one-shot proof
+# (docker-compose.yaml) and the Cloud-enrolled node (deploy/).
 #
-# Used by every demo service in docker-compose.yaml. The two Expanso binaries
-# work together:
-#   - expanso-edge runs the agent that executes pipelines
-#   - expanso-cli deploys pipeline YAMLs against the local agent's API
-# An entrypoint wrapper (run-demo.sh) orchestrates them so a single
-# `docker compose run` lifts both up and tears down cleanly.
-#
-# uv runs the standard-library gateway client and the mounted demo-kit gateway.
+# Edge and the CLI are pinned to one release; the base is pinned by digest.
+# It runs as the base image's unprivileged `expanso` user (uid 1000).
 
-FROM ghcr.io/astral-sh/uv:latest AS uv
+FROM ghcr.io/expanso-io/expanso-edge:v2.1.22@sha256:0a119d5cd7cc5c889d0d57a468e16ffb892134a5a4e4b2e5d529e4c0ad1a3ecb
 
-FROM ghcr.io/expanso-io/expanso-edge:nightly
-
-# Base image runs as `expanso` (uid 1000) by default. We need root to install
-# packages and add binaries; the final USER directive drops back.
 USER root
 
-# Layer 1: uv (multi-stage copy from the official image, no apt needed).
-COPY --from=uv /uv /uvx /usr/local/bin/
-
-# Layer 2: expanso-cli (official installer downloads matching arch binary).
-# Base image is Alpine — apk + bash for the installer. install.sh writes to
-# /usr/local/bin by default when EXPANSO_INSTALL_DIR is set.
-RUN apk add --no-cache curl ca-certificates bash \
+# Python runs the subprocess classifier and the replay gateway; curl is the
+# readiness probe. Both need only the standard library.
+RUN apk add --no-cache python3 curl ca-certificates bash \
  && curl -fsSL https://get.expanso.io/cli/install.sh \
-    | EXPANSO_INSTALL_DIR=/usr/local/bin bash \
+    | EXPANSO_INSTALL_DIR=/usr/local/bin EXPANSO_VERSION=v2.1.22 bash \
  && expanso-cli version
 
-# Layer 3: pre-install Python so first pipeline run doesn't pay the cost.
-RUN uv python install 3.12 || true
+COPY --chown=expanso:expanso run-demo.sh /usr/local/bin/run-demo
+COPY --chown=expanso:expanso gateway /opt/demo/gateway
+COPY --chown=expanso:expanso scripts /opt/demo/scripts
+COPY --chown=expanso:expanso config /opt/demo/config
+COPY --chown=expanso:expanso data /opt/demo/data
+COPY --chown=expanso:expanso fixtures /opt/demo/fixtures
+COPY --chown=expanso:expanso pipelines /opt/demo/pipelines
+RUN chmod 0555 /usr/local/bin/run-demo
 
-# Layer 4: entrypoint wrapper.
-COPY run-demo.sh /usr/local/bin/run-demo
-RUN chmod +x /usr/local/bin/run-demo
-
-# uv cache + edge data dir need to be writable by the runtime user.
-RUN mkdir -p /root/.cache/uv && chmod -R 777 /root/.cache
-
-ENV UV_LINK_MODE=copy \
-    UV_COMPILE_BYTECODE=1
-
-# Run as root for the demo — the agent + cli + uv all need to write to the
-# same paths and the friction of juggling permissions isn't worth it for
-# local iteration.
+# Pipelines use paths relative to the node's working directory.
+WORKDIR /opt/demo
+USER expanso
 ENTRYPOINT ["run-demo"]
