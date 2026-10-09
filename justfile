@@ -27,7 +27,7 @@ up-offline: _ports-check
     @for _ in $(seq 1 50); do curl -fsS -o /dev/null http://127.0.0.1:{{PORT}}/explorer/index.html 2>/dev/null && break; sleep 0.1; done
     @echo "explorer on http://127.0.0.1:{{PORT}}/explorer/ (just down stops it)"
 
-gateway-up:
+gateway-up: _gateway-ports-check
     mkdir -p .runtime
     nohup uv run -s ../_demo-kit/model-gateway.py serve --config model-gateway.toml --port {{MODEL_GATEWAY_PORT}} > .runtime/gateway.log 2>&1 & echo $! > .runtime/gateway.pid
     @echo "model gateway on http://127.0.0.1:{{MODEL_GATEWAY_PORT}} (${GATEWAY_MODE:-fixture})"
@@ -65,4 +65,8 @@ ports:
 
 [private]
 _ports-check:
-    @uv run --no-project scripts/demo-ports.py resolve --demo-dir . >/dev/null
+    @uv run --no-project scripts/demo-ports.py resolve --demo-dir . --service PORT >/dev/null
+
+[private]
+_gateway-ports-check:
+    @uv run --no-project scripts/demo-ports.py resolve --demo-dir . --service MODEL_GATEWAY_PORT >/dev/null
