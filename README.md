@@ -170,3 +170,5 @@ The removals are recorded as approved in
 `ports.json` declares the local services. `just ports` shows the saved
 assignments. `just down` retains them, so the next `just up` uses the same
 URLs. An occupied assigned port stops startup with an error.
+
+Shutdown verifies saved process identity before signalling the demo or its children. A live PID from a launch predating identity records is left running with an error; stop that earlier launch from its original terminal before restarting. Unknown listeners are never terminated.
