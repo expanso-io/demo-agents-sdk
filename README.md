@@ -164,3 +164,9 @@ The removals are recorded as approved in
 ## License
 
 [Apache 2.0](./LICENSE)
+
+## Local ports
+
+`ports.json` declares the local services. `just ports` shows the saved
+assignments. `just down` retains them, so the next `just up` uses the same
+URLs. An occupied assigned port stops startup with an error.

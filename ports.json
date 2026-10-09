@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "demo": "demo-agents-sdk",
+  "ports": {
+    "PORT": 18160,
+    "MODEL_GATEWAY_PORT": 18157
+  }
+}
