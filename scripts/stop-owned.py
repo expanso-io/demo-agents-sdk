@@ -8,6 +8,7 @@ import os
 import signal
 import subprocess
 import time
+from contextlib import suppress
 from pathlib import Path
 
 
@@ -86,18 +87,12 @@ def stop(pidfile, root, match):
         if before is None:
             continue
         if identity(target) != before:
-            raise ValueError(
-                "Process identity changed during shutdown; leaving it alone"
-            )
-        try:
+            raise ValueError("Process identity changed during shutdown; leaving it alone")
+        with suppress(ProcessLookupError):
             os.kill(target, signal.SIGTERM)
-        except ProcessLookupError:
-            pass
     for _ in range(50):
         if not any(
-            identity(target) == snapshot
-            for target, snapshot in snapshots.items()
-            if snapshot
+            identity(target) == snapshot for target, snapshot in snapshots.items() if snapshot
         ):
             pidfile.unlink(missing_ok=True)
             sidecar(pidfile).unlink(missing_ok=True)

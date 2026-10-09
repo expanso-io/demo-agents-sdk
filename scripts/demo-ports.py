@@ -87,9 +87,7 @@ def atomic_write(path, data):
         temporary.unlink(missing_ok=True)
 
 
-def resolve(
-    demo_dir, *, allow_bound=False, reassign=False, limits=(20000, 31999), services=None
-):
+def resolve(demo_dir, *, allow_bound=False, reassign=False, limits=(20000, 31999), services=None):
     demo_dir = demo_dir.resolve()
     selected = manifest(demo_dir / "ports.json")
     if services is not None and not set(services) <= selected["ports"].keys():
@@ -130,15 +128,11 @@ def resolve(
                 for n, p in ports.items()
             ):
                 raise ValueError("invalid persistent allocation")
-            if used.intersection(ports.values()) or len(set(ports.values())) != len(
-                ports
-            ):
+            if used.intersection(ports.values()) or len(set(ports.values())) != len(ports):
                 raise ValueError("duplicate persistent allocation")
             used.update(ports.values())
         for key in list(records):
-            if not Path(key).exists() and not any(
-                bound(p) for p in records[key]["ports"].values()
-            ):
+            if not Path(key).exists() and not any(bound(p) for p in records[key]["ports"].values()):
                 del records[key]
         if reassign:
             old = records.get(str(demo_dir), {}).get("ports", {})
@@ -154,11 +148,7 @@ def resolve(
             for service, preferred in item["ports"].items():
                 if service in record["ports"]:
                     continue
-                if (
-                    preferred is not None
-                    and preferred not in used
-                    and not bound(preferred)
-                ):
+                if preferred is not None and preferred not in used and not bound(preferred):
                     chosen = preferred
                 else:
                     chosen = next(
@@ -175,9 +165,7 @@ def resolve(
                     )
                 record["ports"][service] = chosen
                 used.add(chosen)
-        ports = {
-            name: records[str(demo_dir)]["ports"][name] for name in selected["ports"]
-        }
+        ports = {name: records[str(demo_dir)]["ports"][name] for name in selected["ports"]}
         atomic_write(state_path, state)
         if not allow_bound:
             busy = [
@@ -238,9 +226,7 @@ def main():
                 values = record.get("ports", {})
                 if not isinstance(values, dict) or any(
                     not NAME.fullmatch(n)
-                    or (
-                        p is not None and (type(p) is not int or not 1024 <= p <= 65535)
-                    )
+                    or (p is not None and (type(p) is not int or not 1024 <= p <= 65535))
                     for n, p in values.items()
                 ):
                     raise ValueError("invalid registry service")
